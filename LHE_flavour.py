@@ -77,7 +77,7 @@ def get_LHE_flavour2(jets, events):
         '''
     
     LHE_flavour2 = ak.zeros_like(jets.hadronFlavour)
-    jet_shape = ak.num(jets.hadronFlavour)
+    n_jets_per_event = ak.num(jets)
 
     ## have to work with flattened objects as awkwards doesn not allow to modify it's entries
     LHE_flavour_np = ak.flatten(LHE_flavour2).to_numpy().copy()
@@ -89,21 +89,22 @@ def get_LHE_flavour2(jets, events):
     drs, [LHE_match, jets_match] = LHE_outgoing.metric_table(jets, return_combinations=True, axis=1)
 
     arms = ak.argmin(drs, axis=2) ## for each event, for each LHE particle, the closest jet index
-    cums = np.cumsum(jet_shape)[:-1]
+    cums = np.cumsum(n_jets_per_event)[:-1]
     cums = np.append(0,cums)
     arms_flat = arms + cums ### positions of the matchet jets in the flattened list
     arms_np = ak.flatten(arms_flat).to_numpy().data
     LHE_match_flat = ak.flatten(LHE_match[:,:,:1].pdgId,axis=1)
     
-    aa = count_2d(arms, ak.ArrayBuilder())
-    aa_np = ak.flatten(aa).to_numpy()
+    ### For each jet, count the number of LHEpartons that match to it. Leave those jets unmatched that have more than one LHE particle pointing to them. 
+    n_matches_LHEpart_jet = count_2d(arms, ak.ArrayBuilder())
+    n_matches_np = ak.flatten(n_matches_LHEpart_jet).to_numpy()
 
     LHE_flavour_np = ak.flatten(LHE_flavour2).to_numpy().copy()
-    LHE_flavour_np[arms_np[ak.num(LHE_match_flat)>0][aa_np==1]] = ak.flatten(LHE_match_flat)[aa_np==1]
-    ### Some LHE particles might point to the same LHE partons. Those are kept unmatched.
-    LHE_flavour_np[arms_np[ak.num(LHE_match_flat)>0][aa_np>1]] = -999 
+    LHE_flavour_np[arms_np[ak.num(LHE_match_flat)>0][n_matches_np==1]] = ak.flatten(LHE_match_flat)[n_matches_np==1]
+    ### Some LHE particles might point to the same jets. Those are kept unmatched.
+    LHE_flavour_np[arms_np[ak.num(LHE_match_flat)>0][n_matches_np>1]] = -999 
 
-    jets["LHE_flavour2"] = ak.unflatten(LHE_flavour_np, jet_shape)
+    jets["LHE_flavour2"] = ak.unflatten(LHE_flavour_np, n_jets_per_event)
 
     return jets
 
@@ -119,7 +120,7 @@ def get_LHE_flavour(reco_jets, events):
     The difference with the LHE flavor2 is that here we start from the jet and match to the LHE particle.
     """
     LHE_flavour = ak.zeros_like(reco_jets.hadronFlavour)
-    jet_shape = ak.num(reco_jets.hadronFlavour)
+    n_jets_per_event = ak.num(reco_jets)
     LHE_flavour_np = ak.flatten(LHE_flavour).to_numpy()
 
     LHEPart = events.LHEPart
@@ -154,5 +155,5 @@ def get_LHE_flavour(reco_jets, events):
     b_criteria_unknown = ak.flatten(bbar_criteria & b_criteria).to_numpy()
     LHE_flavour_np[b_criteria_unknown] = 0
 
-    reco_jets["LHE_flavour"] = ak.unflatten(LHE_flavour_np, jet_shape) 
+    reco_jets["LHE_flavour"] = ak.unflatten(LHE_flavour_np, n_jets_per_event) 
     return reco_jets
