@@ -1,6 +1,12 @@
 #!/usr/bin/env python
     # coding: utf-8
 
+"""
+Analyses the output from  CoffeaJERCProcessor_L5 and fits the response distributions. 
+
+Author(s): Andris Potrebko (RTU)
+"""
+
 # import sys
 # coffea_path = '/afs/cern.ch/user/a/anpotreb/top/JERC/coffea/'
 # if coffea_path not in sys.path:
@@ -178,9 +184,9 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
         if saveplots:
             if not os.path.exists(FitFigDir):
                 os.mkdir(FitFigDir)
-            print("Response fits will be saved under ", FitFigDir)
+            print("Response fit plots will be saved under ", FitFigDir)
         elif not saveplots:
-            print("Response fits won't be saved")
+            print("Response fit plots won't be saved")
         
         for i in pt_bins_to_fit:
             for k in eta_bins_to_fit:
@@ -251,6 +257,7 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     print('-'*25)
     print('-'*25)
     print(f'Starting to fit each flavor in: {flavors}')
+    result_each_flav = {}
     for flav in flavors:
         print('-'*25)
         print('-'*25)
@@ -263,12 +270,13 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
         
         else:
             result = fit_responses(hists_merged, flav, saveplots=saveplots) #scaled_hist
+            result_each_flav[flav] = result
             medians.append(result["Median"][0][0])
             medianstds.append(result["MedianStd"][0][0])
             for key in result:
                 h.save_data(result[key], key, flav, tag_fit_res, pt_bins.centres, fiteta_bins.edges, out_txt_path)
                 pass
-                
+
     #     print("result = ", result)
         # median = result["Median"]
         # medianStd = result["MedianStd"] 
@@ -279,7 +287,10 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
         else:
             plot_makers.plot_corrections(result, pt_bins.centres, fiteta_bins, tag_fit_res, flav, plotetavals=[0, 1.305, 2.5, 3.139], plotmean=True)
     #         plotters.plot_corrections_eta(result["Median"], result["MedianStd"], pt_bins, fiteta_bins.centres, tag_fit_res, flav, plotptvals=[20, 35, 150, 400])
-    
+
+    from save_json import save_json
+    save_json(result_each_flav, pt_bins, fiteta_bins, out_txt_path+'/response_fit_results'+tag_fit_res+'.json')
+
 
     print('-'*25)
     print('-'*25)
@@ -309,7 +320,7 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
 if __name__ == "__main__":
     # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
-    data_tags = ['scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+    data_tags = ['QCD-MG-Her'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
     # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
 
     # data_tags = ['QCD-Py_noiso'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
@@ -319,15 +330,15 @@ if __name__ == "__main__":
          ################ Parameters of the run and switches  #########################
         "test_run"            : False,   ### True check on a file that was created with a processor with `test_run=True` (maybe obsolete because this can be specified just in the data_tag)
         "load_fit_res"        : False,   ### True if only replot the fit results without redoing histogram fits (also kind of obsolete because plotting scripts exist in `plotters` )
-        "saveplots"           : True,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
-        "combine_antiflavour" : False,    ### True if combine the flavor and anti-flavour jets into one histogram
+        "saveplots"           : False,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
+        "combine_antiflavour" : True,    ### True if combine the flavor and anti-flavour jets into one histogram
         
         ### Choose eta binning for the response fits.
         ### HCalPart: bin in HCal sectors, CaloTowers: the standard JERC binning,
         ### CoarseCalo: like 'CaloTowers' but many bins united; onebin: combine all eta bins
         ### Preprocessing always done in CaloTowers. For the reponse distributions, the bins can be merged.
-        "eta_binning"         : "HCalPart",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
-        "pt_binning"          : "onebin", ### MC_truth, Uncert, Coarse, onebin
+        "eta_binning"         : "Summer20Flavor",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
+        "pt_binning"          : "MC_truth", ### MC_truth, Uncert, Coarse, onebin
         "sum_neg_pos_eta_bool": True,  ### if combining the positive and negative eta bins
         "tag_Lx" : '_L5',                 ### L5 or L23, but L23 not supported since ages.
         
@@ -344,13 +355,13 @@ if __name__ == "__main__":
 
 
         ### Define which flavors should be fit
-        # "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        "flavors": ['b'],
+        "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        # "flavors": ['ISR_gluon', 'FSR_gluon'],
 
         ### None if all the pt bins should be fit, otherwise a list of two numbers for the range of pt bins to fit, or just one number for a single pt bin
         "pt_to_fit": None,
         # pt_to_fit: list = [30]
-        "eta_to_fit": [0],
+        # "eta_to_fit": [0],
     }
 
     for data_tag in data_tags:

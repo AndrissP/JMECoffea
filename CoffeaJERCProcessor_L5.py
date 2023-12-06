@@ -7,7 +7,8 @@ output histograms: ptresponse histogram, pt_reco histogram for each flavor and t
 
 from memory_profiler import profile
 from common_binning import JERC_Constants
-import JERCProcessorcuts as cuts
+# import JERCProcessorcuts as cuts
+from JERCProcessorcuts import apply_jetNevent_cuts
 
 # workaround to get a locally installed coffea and awkwrd version using lch on lxplus
 # comment out or replace the path if I happened to forget to remove these lines before pushing:
@@ -44,7 +45,6 @@ import awkward as ak
 # manual_bins = [400, 500, 600, 800, 1000, 1500, 2000, 3000, 7000, 10000]
 ptbins = np.array(JERC_Constants.ptBinsEdgesMCTruth())
 etabins = np.array(JERC_Constants.etaBinsEdges_CaloTowers_full())
-
 
 class Processor(processor.ProcessorABC):
     def __init__(self, processor_config):   
@@ -146,98 +146,10 @@ class Processor(processor.ProcessorABC):
         output['sum_weights'] = hist.Hist(cutflow_axis, storage="weight", label="sum of weights")
 
         dataset = events.metadata['dataset']
-    
-        ############ Event Cuts ############
-        # apply npv cuts
-        output['cutflow_events'].fill(cutflow='all_events', weight=len(events))
-        
-        npvCut = (events.PV.npvsGood > 0)
-        pvzCut = (np.abs(events.PV.z) < 24)
-        rxyCut = (np.sqrt(events.PV.x*events.PV.x + events.PV.y*events.PV.y) < 2)
-        eventsCut = npvCut & pvzCut & rxyCut
-        if self.cfg["gen_vtx_dz_cut"]["apply"]==True:
-            gen_vtx_dz_cut = (np.abs(events.GenVtx.z-events.PV.z)<0.2)
-            eventsCut = eventsCut & gen_vtx_dz_cut
-        
-        selectedEvents = events[eventsCut] 
-        output['cutflow_events'].fill(cutflow='gen vertex cut', weight=len(selectedEvents))
-        # get GenJets and Jets
-        jets = selectedEvents.Jet
-        output['cutflow_jets'].fill(cutflow='all_jets', weight=ak.sum(ak.num(jets)))
+        selectedEvents, reco_jets, cutflow_evts, cutflow_jets = apply_jetNevent_cuts(events, self.cfg, output['cutflow_events'], output['cutflow_jets'], self, dataset)
+        output['cutflow_events'] = cutflow_evts
+        output['cutflow_jets'] = cutflow_jets
 
-        ########### Redo the flavour tagging if neccesarry. LHE Flavour2 derivation has to be done before the jet cuts  ###########
-        #### Some samples have a missing LHE flavour infomration ####
-        if (not 'LHEPart' in selectedEvents.fields) and ('LHE_flavour' in self.jetflavour):
-            raise ValueError(f"jet flavour is chosen as {self.jetflavour}, but the sample does not contain 'LHEPart' "+
-                                 ", so the jet flavour cannot be recalculated.")
-             
-        if self.jetflavour=='LHE_flavour2' or self.split_ISR_FSR_gluons:
-        # if True: ### for testing the ISR/ FSR splitting
-            jets = get_LHE_flavour2(jets, selectedEvents)
-
-        ############ Jet selection ###########
-        # Require that at least one gen jet is matched
-        # jet_gen_match_mask = ~ak.is_none(jets.matched_gen,axis=1)
-        selected_jets = jets[~ak.is_none(jets.matched_gen,axis=1)]
-        # del jet_gen_match_mask
-        output['cutflow_jets'].fill(cutflow='gen matched', weight=ak.sum(ak.num(selected_jets)))
-
-        ############ Apply Jet energy corrections on the jets ###########
-        # define variables needed for corrected jets
-        # https://coffeateam.github.io/coffea/notebooks/applying_corrections.html#Applying-energy-scale-transformations-to-Jets
-        ## raw - subtracting back the corrections applying when generating the NanoAOD
-        selected_jets['pt_raw'] = (1 - selected_jets['rawFactor']) * selected_jets['pt']     #raw pt. pt before the corrections are applied to data
-        selected_jets['mass_raw'] = (1 - selected_jets['rawFactor']) * selected_jets['mass']
-        selected_jets['pt_gen'] = ak.values_astype(ak.fill_none(selected_jets.matched_gen.pt, 0), np.float32)
-        selected_jets['rho'] = ak.broadcast_arrays(selectedEvents.fixedGridRhoFastjetAll, selected_jets.pt)[0]
-        events_cache = selectedEvents.caches[0]
-
-        reco_jets = self.jet_factory.build(selected_jets, lazy_cache=events_cache)
-
-        leptons, tightelectrons, tightmuons = cuts.select_leptons(selectedEvents)
-        # ###### Event selection based on leptons: 2 (0/1/2) reco leptons for DY (TTBAR semilep) ######
-        # # cuts on DY and ttbar based on L3Res selections https://twiki.cern.ch/twiki/bin/view/CMS/L3ResZJet
-        if self.cfg["good_lepton_cut"]["apply"]==True:
-            selectedEvents, reco_jets, leptons, tightelectrons, tightmuons = cuts.good_lepton_cut(reco_jets, selectedEvents, dataset, leptons, tightelectrons, tightmuons)
-        output['cutflow_events'].fill(cutflow='lepton selection', weight=len(selectedEvents))
-
-        # Require tight lepton veto id on jets = no matched (dressed) leptons in the jet;
-        # Leptons are also reconstructed as jets with just one (or more) particle, so it is important to remove them
-        if self.cfg["tight_lepton_veto_id"]["apply"]==True:
-            reco_jets[(reco_jets.jetId >> 2 & 1)==1] ### tight lepton veto id
-        output['cutflow_jets'].fill(cutflow='tight lep. id', weight=ak.sum(ak.num(reco_jets)))
-
-        if self.cfg["recolep_drcut"]["apply"]==True:
-            reco_jets = cuts.recolep_drcut(reco_jets, leptons, leptons)
-        output['cutflow_jets'].fill(cutflow=r'$\Delta R$'+' cut with leptons', weight=ak.sum(ak.num(reco_jets)))
-
-        cut_tmp = self.cfg["jet_pt_cut"]
-        if cut_tmp["apply"]==True:
-            reco_jets = cuts.jet_pt_cut(reco_jets, cut_tmp["mingenjetpt"])
-        output['cutflow_jets'].fill(cutflow='jetpt cut', weight=ak.sum(ak.num(reco_jets)))
-
-        # redo the jet matching with potentially lower dr cut than matched automatically
-        cut_tmp = self.cfg["reco_jetMCmatching"]
-        if cut_tmp["apply"]==True:
-            reco_jets = cuts.jetMCmatching(reco_jets, **cut_tmp)
-        output['cutflow_jets'].fill(cutflow='matched gen cut', weight=ak.sum(ak.num(reco_jets)))
-        ######### Alpha cut = cut on the additional jet activity  ############    
-        # Not used since run 2 because the large pileup causes a bias    
-        cut_tmp = self.cfg["leading_jet_and_alpha_cut"]
-        if cut_tmp["apply"]==True:
-            reco_jets, selectedEvents = cuts.leading_jet_and_alpha_cut(reco_jets, leptons, selectedEvents, dataset, **cuts.remove_apply(cut_tmp))
-
-        cut_tmp = self.cfg["select_Nth_jet"]
-        if cut_tmp["apply"]==True:
-            reco_jets, selectedEvents = cuts.select_Nth_jet(reco_jets, selectedEvents, cut_tmp["N"])
-        output['cutflow_jets'].fill(cutflow=r'$\alpha$ cut'+'\nleading jets', weight=ak.sum(ak.num(reco_jets)))
-        output['cutflow_events'].fill(cutflow=r'$\alpha$ cut',       weight=len(selectedEvents))
-
-        # # Cut on overlapping jets
-        cut_tmp = self.cfg["jet_iso_cut"]
-        if cut_tmp["apply"]==True:
-            reco_jets = cuts.jet_iso_cut(reco_jets, **cuts.remove_apply(cut_tmp))
-        output['cutflow_jets'].fill(cutflow='iso jets', weight=ak.sum(ak.num(reco_jets)))
         gen_jets = reco_jets.matched_gen
 
         ############ Derive LHE flavour   ###########

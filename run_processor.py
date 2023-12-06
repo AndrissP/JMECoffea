@@ -164,10 +164,13 @@ def run_processor(
     if test_run:
         Nfiles = 1
     
-    chunksize = 30000 #25000 
-    ## hard to adjust the chunksize correctly. Without LHE flavor matching 50 000/ less for hadronic is usually fine, with LHE flavor, needs to decrease to 25k.  
-    print("chunksize used = ", chunksize)
-    
+    chunksize = 40000 #40000 #25000 
+    ## hard to adjust the chunksize correctly. Without LHE flavor matching 50 000/ less for dilep (40k) hadronic (35k?) is usually fine, with LHE flavor, needs to decrease to 25k.  
+    # print("chunksize used = ", chunksize)
+    printout_tmp = f"chunksize used = {chunksize}"
+    print(printout_tmp)
+    printout += printout_tmp
+
     suffix = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
     username = os.environ['USER']
     condor_log_dir = '/eos/home-'+username[0]+'/'+username+log_basename+suffix
@@ -269,11 +272,12 @@ def run_processor(
                     'host': socket.gethostname(),
                 },
                 job_extra = {
-                    'MY.JobFlavour': '"espresso"',
+                    'MY.JobFlavour': '"longlunch"',
                     'MY.AccountingGroup': '"group_u_CMST3.all"',
+                    'MY.WantOS': '"el7"',
                 },
             )
-            cluster.adapt(minimum=2, maximum=50)
+            cluster.adapt(minimum=2, maximum=300)
             # cluster.adapt(
             #     minimum=args["scaleout"],
             #     maximum=args["max_scaleout"],
@@ -321,7 +325,7 @@ def run_processor(
                                                   'schema': NanoAODSchema, #BaseSchema
                                                   'xrootdtimeout': 60,
                                                   'retries': 2,
-                                                  'treereduction':5,
+                                                  'treereduction':4,
     #                                               'workers': 2
                                               },
                                               chunksize=chunksize,
@@ -361,19 +365,20 @@ def main():
     parser = optparse.OptionParser(usage)
     parser.add_option('-d', '--data',        dest='data_tag',    help='data tag from the available datasets',      default=None,        type='string')
     (opt, args) = parser.parse_args()
-    data_tags = [opt.data_tag]
-    # data_tags = ['Pythia-non-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    data_tags = ['QCD-MG-Her'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['Pythia-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    params =      {"run_comment": 'Reruning ttbar all decay ch. for only 10 files. condor strugles to give more jobs.',
-                #   "blacklist_sites":['T2_IT_Rome'],
-                  "get_exact_endpoints":False,
+    data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Her', 'DY-MG-Py', 'QCD-MG-Her', 'Herwig-TTBAR', 'QCD-MG-Py', 
+    # data_tags = ['Pythia-dilep-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    # data_tags = ['QCD-Py', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-Pythia' ] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    # data_tags = ['Pythia-fullhad-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
+    data_tags = ['Herwig-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
+    params =      {"run_comment": 'Replace the jet matching to a more memory saving way. Will try chunksize=40k. In the previous two runs running with chunksize 35k as the ones with 40k failed because of out-of-memory in the processor step. Running on half the dataset and the full one.',
+                  "blacklist_sites":['T2_US_UCSD'],
+                  "get_exact_endpoints":True,
                   "add_tag":'',
                   "Nfiles": -1,
                   
                   } 
-    # for data_tag in data_tags:
-        # run_processor(data_tag=data_tag, test_run=False, executor='condor', **params)
+    for data_tag in data_tags:
+        run_processor(data_tag=data_tag, test_run=False, executor='condor', **params)
     # run_processor(fileslist=[
     #                         'root://osg-se.sprace.org.br:1094//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/250000/A1EF1097-A3D4-1544-BB95-806AE84BB83E.root',
     #                         'root://xrootd-cms.infn.it//store/mc/RunIISummer20UL18NanoAODv9/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/230000/9D0C102A-1A88-7D48-80A7-509AB9EAFD26.root',
@@ -381,13 +386,13 @@ def main():
     #                         executor='iterative',
     #                         test_run=False,
     #                         **params)
-    run_processor(fileslist=[
-                            '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/4988713D-E70D-E243-A384-B902119A3604.root',
-                            '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/519DE155-138B-DE46-92CC-6460F9172458.root',
-                            '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/59ECE256-116E-E042-BA04-E415FCDA1A3B.root',],
-                            executor='iterative',
-                            test_run=False,
-                            **params)
+    # run_processor(fileslist=[
+    #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/4988713D-E70D-E243-A384-B902119A3604.root',
+    #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/519DE155-138B-DE46-92CC-6460F9172458.root',
+    #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/59ECE256-116E-E042-BA04-E415FCDA1A3B.root',],
+    #                         executor='iterative',
+    #                         test_run=False,
+    #                         **params)
 
 if __name__ == "__main__":
     main()

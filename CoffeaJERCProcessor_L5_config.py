@@ -13,10 +13,16 @@ processor_config = {
     "leading_jet_and_alpha_cut":{
     # Alpha cut not used (alpha=1) since run 2 because the large pileup causes a bias
         "apply":True,
-        "alphaQCD": 1.0,
-        "alphaDY":  1.0,
+        "alphaQCD": 0.3,
+        "alphaDY":  0.3,
         "NjetsQCD": 3, #-1 for all jets
         "NjetsDY":  2,
+    },
+    "dphi_separation":{
+    # for back-to-back selection, set dphi_DY=2.7 and dphi_QCD=2.7
+        "apply":True,
+        "dphi_DY": 2.7,
+        "dphi_QCD": 2.7,
     },
     "select_Nth_jet":{
     # for debugging purposses, select exactly the Nth jet in each event

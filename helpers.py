@@ -333,13 +333,15 @@ def fit_response(histo, Neff, Nfit=3, sigma_fit_window=1.5):
     return [p, cov, chi2, Ndof, status, [xfit_l, xfit_h]]
 
 
-barable_flavors = ['b', 'c', 's', 'u', 'd', 'ud', 'q']
+barable_flavors = ['b', 'c', 's', 'u', 'd', 'ud', 'q', 'cs']
 
 composite_flavor_dict = {
     'q': ['u', 'd', 's'],
     'ud': ['u', 'd'],
     'qbar': ['ubar', 'dbar', 'sbar'],
     'udbar': ['ubar', 'dbar'],
+    'cs': ['c', 's'],
+    'csbar': ['cbar', 'sbar'],
     # 'g': ['ISR_gluon', 'FSR_gluon'],
 }
 

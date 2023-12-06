@@ -16,12 +16,15 @@ def make_comparison_plot(data_dict,
                               ptbins=PtBins("MC_truth"), #np.array(JERC_Constants.ptBinsEdgesMCTruth()),
                               binidx=0, flav='b',
                               ratio_name='ratio',
-                              inverse=True, plotvspt=True, ratio_ylim=None):
+                              inverse=True, plotvspt=True, ratio_ylim=None,
+                              reset_colors = True,
+                              custom_colors = None,):
     ''' Make a plot of the jet energy response vs pt for the data points in the dictionary `data_dict`
     Compare with with lines obtained from coffea evaluators in `function_dict`.
     `function_dict` can be None than, no lines are shown.
     A ratio plot is drawn vs the first entry in `data_dict`.
     For the legends and figure name the flavor `flav` and eta bin values with the index `etaidx` are used.
+    reset_colors: if match the colors of the first points to the colors of the first lines
     '''
    
     ########### Retreive the data from the dictionary and some logic with it ############
@@ -85,12 +88,11 @@ def make_comparison_plot(data_dict,
     
     # Set up a new cycler to set up colors of the lines match to the colors of the points and all start with black
     # , while for the ratio plot to start with the second marker and color
-    reset_colors = True ### if match the colors of the first points to the colors of the first lines
     old_rc_cycler = plt.rcParams['axes.prop_cycle']
     rc_bykey = old_rc_cycler.by_key()
     for key in rc_bykey.keys():
         if key=='color':
-            rc_bykey[key] = ['k']+rc_bykey[key]
+            rc_bykey[key] = ['k']+rc_bykey[key] if custom_colors is None else custom_colors+rc_bykey[key][:len(rc_bykey[key])-len(custom_colors)+1]
         else:
             rc_bykey[key] = rc_bykey[key]+[rc_bykey[key][-1]]
     new_cycler = cycler(**rc_bykey)

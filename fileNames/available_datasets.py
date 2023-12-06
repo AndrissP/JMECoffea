@@ -17,6 +17,10 @@ data_tag: [file_name_path, xsec_path, legend_label]
 dataset_dictionary = {
     "Pythia-TTBAR": [None, 'fileNames/TTBAR_Pythia_20UL18/xsecs_TTBAR_Pow-Py8.txt', legend_labels["ttbar"]["lab"]+'Pow+Py8'],
     "Pythia-semilep-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
+    "Pythia-dilep-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToDilep20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
+    "Pythia-fullhad-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToHad20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
+    "Pythia-semilep-TTBAR_0-500": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano_redi_0-500.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
+    "Pythia-semilep-TTBAR_501-end": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano_redi_501-end.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
     "Pythia-non-semilep-TTBAR": [None, 'fileNames/TTBAR_Pythia_20UL18/xsecs_TTBAR_Pow-Py8-non-semilep.txt', legend_labels["ttbar"]["lab"]+'Pow+Py8'],
     "Herwig-TTBAR": ['fileNames/TT20UL18_JMENano_Herwig.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Her7'],
     "DY-MG-Py":     ['fileNames/DYJets_MG-Py.txt', 1, 'ZJets MG+Py8'],

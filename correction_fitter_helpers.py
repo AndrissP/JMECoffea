@@ -1,18 +1,16 @@
-header_txt = ('# L5 flavor corrections for IC5 algorithm \n'+
-'# [gJ] (gluons from diJet mixture) \n'+
-'# [bJ] (b quark from diJet mixture) \n'+
-'# [cJ] (c quark from diJet mixture) \n'+
-'# [qJ] (uds quarks from diJet mixture) \n'+
-'# [udJ] (ud quark from diJet mixture) \n'+
-'# [uJ] (u quark from diJet mixture) \n'+
-'# [dJ] (d quark from diJet mixture) \n'+
-'# [gT] (gluons from ttbar events) \n'+
-'# [qT] (uds quarks from ttbar events) \n'+
-'# [cT] (c quark from ttbar events) \n'+
-'# [bT] (b quark from ttbar events) \n'+
-'# energy mapping: ptGen = (pt - p5)/p6 \n'+
-'# parametrization: p2+p3*logPt+p4*logPt^2, constant if Pt<p0 or Pt>p1 \n'+
-'#etamin  etamax  #ofparameters  ptmin  ptmax    p2         p3        p4     mapping: p5        p6 ')
+header_txt = '''# L5 flavor corrections for IC5 algorithm
+ [*J] (flavor * from diJet mixture)
+ [*T] (flavor * from ttbar sample)
+ [*S] (flavor * from simultaneous fit of diJet, ttbar and Drell-Yan)
+ [g*] (gluonss )
+ [b*] (b quarks )
+ [c*] (c quarks )
+ [q*] (uds quarks )
+ [ud*] (ud quarks )
+ [a*] (all quarks )
+ parametrization: p2+p3*logPt+p4*logPt^2+p5*logPt^2+p6*logPt^3, constant if Pt<p0 or Pt>p1
+ etamin  etamax  #ofparameters  ptmin  ptmax    p0         p1        p2        p3        p4
+'''
 
 def save_correction_txt_file(txtfile_outname, fit_res_all_tags):
     '''
@@ -48,9 +46,9 @@ def find_stationary_pnt_poly(xmin, xmax, *p, degree=4):
         c0, c1, c2, c3 = p
     elif degree==4:
         c0, c1, c2, c3, c4 = p
-    xmin = np.log10(xmin)
-    xmax = np.log10(xmax)
-    xs = np.linspace(xmin, xmax, 1000)
+    xmin_l = np.log10(xmin)
+    xmax_l = np.log10(xmax)
+    xs = np.linspace(xmin_l, xmax_l, 1000)
     if degree==3:
         deriv = lambda xs: c1+2*c2*xs+c3*3*xs**2
     elif degree==4:
@@ -60,12 +58,11 @@ def find_stationary_pnt_poly(xmin, xmax, *p, degree=4):
     last_change_idx = np.where(changes_sign==-1)[0]
     if len(last_change_idx)==0:
         last_change_idx = 0
-        root = xmax
+        return xmax
     else:
         last_change_idx = last_change_idx[-1]
         root = brentq(deriv, xs[last_change_idx], xs[last_change_idx+1] )
-    
-    return 10**root
+        return 10**root
 
 #### initial values borrowed from Winter14 data
 #### https://github.com/cms-jet/JECDatabase/blob/master/textFiles/Winter14_V8_MC/Winter14_V8_MC_L5Flavor_AK5Calo.txt/
@@ -153,6 +150,24 @@ def poly3(x, *p):
     res = c0+c1*xs+c2*xs**2+c3*xs**3
     return res
 
+def poly3_1_x(x, *p):
+    c0, c1, c2, c3, c4 = p
+    xs = np.log10(x)
+    res = c0+c1*xs+c2*xs**2+c3*xs**3+c4/xs**10
+    return res
+
+def poly3_1_x2(x, *p):
+    c0, c1, c2, c3, c4, c5 = p
+    xs = np.log10(x)
+    res = c0+c1*xs+c2*xs**2+c3*xs**3+c4/xs**c5
+    return res
+
+def poly3_1_x3(x, *p):
+    c0, c1, c2, c3, c4, c5 = p
+    xs = np.log10(x)
+    res = c0+c1*xs+c2*xs**2+c3*xs**3+c4/(xs+c5)
+    return res
+
 def poly3lims(x, xmin, xmax, *p):
     xcp = x.copy()
     lo_pos = xcp<xmin
@@ -160,6 +175,11 @@ def poly3lims(x, xmin, xmax, *p):
     xcp[lo_pos] = xmin
     xcp[hi_pos] = xmax
     return poly3(xcp, *p)
+
+def response_fnc_simp(x, *p):
+    p0, p3, p4, p5 = p
+    logx = np.log10(x)
+    return p0 + (p3*np.exp(-p4*((logx-p5)*(logx-p5))))
 
 def response_fnc(x, *p):
     p0, p1, p2, p3, p4, p5 = p
@@ -192,17 +212,53 @@ fits2plot = { ##name: [function, initial values, # parameters]
 
 main_fit = "Poly, n=4"
 
+def inflate_smallest_std(stds):
+    stds[np.isnan(stds)] = np.inf
+    min_positions = np.argmin(stds, axis=0)
+    second_min_values = np.sort(stds, axis=0)[1, :]
+    inf_pos = (second_min_values == np.inf) & (np.min(stds, axis=0)!=np.inf)
+    second_min_values[inf_pos] = np.min(stds, axis=0)[inf_pos] 
+    ax2 = np.arange(len(min_positions))
+    stds[min_positions, ax2] = second_min_values
+    stds[stds==np.inf] = np.nan
+    return stds
+
 def fit_corrections(etaidx, data_dict, flav, data_tags,
                            fits2plot, main_fit,
                     figdir2=figdir+'correction_fit',
                     jeteta_bins=JetEtaBins(), pt_bins=PtBins(),
                     plot_initial_val=False,
-                    use_recopt=True, maxlimit_static_pnt=True, max_ptval=None,
+                    use_recopt=True, maxlimit_static_pnt=True,
+                    max_point_fit_idx=3,
+                    min_pt_val = None,
+                    max_ptval=None,
                     min_rel_uncert=0.0,
                     min_rel_uncert_relative=0,
+                    inflate_smallest_std_bool=True,
                     show_original_errorbars=False,
-                    ncoefs_out=5, ):
+                    ncoefs_out=5,
+                    saveplots=True,
+                    colors = None ):
     """ fit the data and plot
+    etaidx: index of the eta bin from the data in the `data_dict` to fit
+    data_dict: dictionary of the data to fit
+    flav: flavor of the jets to fit 
+    data_tags: tags of the data to fit. The same order as in data_dict.keys()
+    fits2plot: dictionary of the fit functions to use for fitting and their initial values and number of input parameters. The keys are the names of the fits.
+    main_fit: the name of the fit from `fits2plot` to use for the output. The output will be the coefficients of this fit.
+    figdir2: directory to save the plots
+    jeteta_bins: JetEtaBins object, eta bins used for the data
+    pt_bins: PtBins object, pt bins used for the data
+    plot_initial_val: if True, plot the initial values of the fit functions
+    use_recopt: if True, use the reco pt as the x values for the fit. Otherwise, use the pt bin centres (thus, same values for all the data samples).
+    maxlimit_static_pnt: if True, find the last point where the derivative of the fit function changes sign and use it as the upper limit of the fit range.
+    max_point_fit_idx: if `maxlimit_static_pnt` is True but the static point is too far to the left, use the `max_point_fit_idx`-th point from the end as the upper limit of the fit range.
+    max_ptval: if `maxlimit_static_pnt` is False, use this value as the upper limit of the fit range.
+    min_rel_uncert: minimum relative uncertainty to use for the fit. If 0, use the `min_rel_uncert_relative` to define the minimum uncertainty relative to the range.
+    min_rel_uncert_relative: minimum relative uncertainty to use for the fit relative to the range. If 0, use the `min_rel_uncert` to define the minimum uncertainty.
+    show_original_errorbars: if True, show the original errorbars of the data points.
+    ncoefs_out: number of coefficients of the output function. If less than the number of coefficients of the main fit, pad with zeros.
+    saveplots: if True, save the plots
     """
     ###################### Logistics with the input ######################
     keys = [key for key in data_dict.keys()]
@@ -214,8 +270,14 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     elif max_ptval==None:
         max_ptval=500
 
+    if min_pt_val is None:
+        min_pt_val = np.min(pt_bins.centres)
+
+    if len(data_dict)<2:
+        inflate_smallest_std_bool=False
+
     ### pt limits for the fit
-    ptmin_idx = np.searchsorted(pt_bins.centres, 30, side='left')-1 #-1: so that the first bin includes the value
+    ptmin_idx = np.searchsorted(pt_bins.centres, min_pt_val, side='left') #-1: so that the first bin includes the value
     ptmax_idx = np.searchsorted(pt_bins.centres, max_ptval, side='right')
     data_range = tuple([range(ptmin_idx,ptmax_idx), etaidx])
 
@@ -235,6 +297,9 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     else:
         min_rel_uncert_tmp = min_rel_uncert
     stds_orig = stds.copy()
+    # breakpoint()
+    if inflate_smallest_std_bool:
+        stds = inflate_smallest_std(stds)
     where_limit_std = (stds/yvals)<min_rel_uncert_tmp
     stds[where_limit_std] = min_rel_uncert_tmp*yvals[where_limit_std]
 
@@ -264,8 +329,12 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
                 init_vals = fits2plot[fit][1]
                 if type(init_vals) is dict:
                     init_vals = init_vals[flav][etaidx]
-                p, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, p0=init_vals)
-                p_err, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, p0=p, sigma=means_unc2fit)
+                if len(fits2plot[fit])<4:
+                    bounds = (-np.inf, np.inf)
+                else:
+                    bounds = fits2plot[fit][3]
+                p, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, p0=init_vals, bounds=bounds)
+                p_err, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, p0=p, sigma=means_unc2fit, bounds=bounds)
             except(RuntimeError):
                 print(f"{fit} fit failed")
                 p, p_err = [[np.nan]*fits2plot[fit][2]]*2
@@ -281,7 +350,7 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
 
     ## if chi2 of n=3 polynomial outside the 2 one-sided std of the chi2 distribution, use n=3 polynomial.
     if main_fit == "Poly, n=4" and "Poly, n=3" in fits2plot and chi2.ppf(1-0.158, Ndofs["Poly, n=3"])>chi2s["Poly, n=3"]:
-        main_fit == "Poly, n=3"
+        main_fit = "Poly, n=3"
     
     print(f"Using the {main_fit} fit results ")
     if maxlimit_static_pnt:
@@ -290,22 +359,22 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
         elif main_fit=="Poly, n=4":
             fit_degree = 4
         else:
-            ValueError(f"Main fit is {main_fit} but the derivative for the static point is not defined for this fit.")
+            raise ValueError(f"Main fit is {main_fit} but the derivative for the static point is not defined for this fit.")
         fit_max_lim_new = find_stationary_pnt_poly(fit_min_lim, fit_max_lim, *fitres[main_fit], degree=fit_degree)
     else:
         fit_max_lim_new = fit_max_lim
-    fit_max_lim_idx = np.searchsorted(np.sort(ptbins2fit), fit_max_lim_new)
-    if maxlimit_static_pnt & (fit_max_lim_idx==len(ptbins2fit)) | (fit_max_lim_idx<=len(ptbins2fit)-6):
+    fit_max_lim_idx = np.searchsorted(np.sort(ptbins2fit), fit_max_lim_new, side="right")
+    if maxlimit_static_pnt & (fit_max_lim_idx==len(ptbins2fit)) | (fit_max_lim_idx<=len(ptbins2fit)-max_point_fit_idx):
         # static point is too low or the last point that usually fluctuates out
-        fit_max_lim_idx = len(ptbins2fit)-3
+        fit_max_lim_idx = len(ptbins2fit)-max_point_fit_idx
         fit_max_lim_new = np.sort(ptbins2fit)[fit_max_lim_idx]
     xplot_max_new = np.searchsorted(xplot, fit_max_lim_new)
 
     main_fit_res = fitres[main_fit]
     if ncoefs_out<len(main_fit_res):
         raise ValueError(f"ncoefs is smaller than the number of coefficients of the main fit."
-                        +"ncoefs_out={ncoefs_out}, len(main_fit_res)={len(main_fit_res)}."
-                        +"Either raise the number of coefficients of the output or choose a different output function.")
+                        +f"ncoefs_out={ncoefs_out}, len(main_fit_res)={len(main_fit_res)}."
+                        +f"Either raise the number of coefficients of the output or choose a different output function.")
     fit_res_new = np.concatenate([[jeteta_bins.edges[etaidx], jeteta_bins.edges[etaidx+1],
                                 ncoefs_out, 
                                 fit_min_lim, fit_max_lim_new],
@@ -316,14 +385,25 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
 
     ###################### Plotting ######################
     fig, ax = plt.subplots()
+    legend_original_initiated = False
     for yval, std, reco_pt, std_orig, data_tag in zip(yvals, stds, xvals, stds_orig, data_tags):
+        if colors is not None:
+            color = colors[data_tag]
+        else:
+            color = next(ax._get_lines.prop_cycler)['color']
         plt.errorbar(reco_pt, yval, yerr=std, marker='o',
                     linestyle="none", label=data_tag, #{jeteta_bins.idx2plot_str(etaidx)}',
-                    capsize=1.7, capthick=0.9, linewidth=1.0)
+                    capsize=1.7, capthick=0.9, linewidth=1.0, color=color)
         if show_original_errorbars:
-            plt.errorbar(reco_pt, yval, yerr=std_orig, marker='o',
-                linestyle="none", label=f'Original errorbars',
-                capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black') #, color='blue')
+            if legend_original_initiated:
+                plt.errorbar(reco_pt, yval, yerr=std_orig, marker='o',
+                    linestyle="none",
+                    capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black') #, color='blue')
+            else:
+                legend_original_initiated = True
+                plt.errorbar(reco_pt, yval, yerr=std_orig, marker='o',
+                    linestyle="none", label=f'Original errorbars',
+                    capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black')
     
     for fit in fits2plot:
         if np.isnan(chi2s[fit]): 
@@ -370,18 +450,19 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
               ordered_labels,
               loc="upper left", bbox_to_anchor=(0.01, 0.90)) #, prop={'size': 10}
     
-    figdir2 = (figdir+'/'+data_tag.replace(legend_labels["ttbar"]["lab"], 'ttbar').replace(', ', '-')
-                .replace(" ", "_").replace("+", "_").replace('(', '').replace(')', '').replace('/', '').replace('\n', '')
-              )
-    if not os.path.exists(figdir2):
-        os.mkdir(figdir2)
-        
-    add_name = f'correction_fit_{flav}_'+jeteta_bins.idx2str(etaidx)
-    fig_name = figdir2+'/'+add_name
-        
-    print("Saving plot with the name = ", fig_name+".pdf / .png")
-    plt.savefig(fig_name+'.pdf');
-    plt.savefig(fig_name+'.png');
+    if saveplots:
+        figdir2 = (figdir+'/'+data_tag.replace(legend_labels["ttbar"]["lab"], 'ttbar').replace(', ', '-')
+                    .replace(" ", "_").replace("+", "_").replace('(', '').replace(')', '').replace('/', '').replace('\n', '')
+                )
+        if not os.path.exists(figdir2):
+            os.mkdir(figdir2)
+            
+        add_name = f'correction_fit_{flav}_'+jeteta_bins.idx2str(etaidx)
+        fig_name = figdir2+'/'+add_name
+            
+        print("Saving plot with the name = ", fig_name+".pdf / .png")
+        plt.savefig(fig_name+'.pdf');
+        plt.savefig(fig_name+'.png');
 
     plt.show();
     plt.close();

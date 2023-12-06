@@ -7,14 +7,14 @@ LINES=$(cat $in_file)
 
 for FILE in $LINES
 do
-   site_alias=$(dasgoclient -query="site file=$FILE" | head -n 1)
-	if [[ $outp = WARNING* ]] ; then
+   site_alias=$(dasgoclient -query="site file=$FILE" | grep T2 | head -n 1)
+	if [[ -z "$site_alias" ]] ; then
      echo "Discarded file = " $FILE
 	else
-		redirector=$(python GetSiteInfo.py ${site_alias} | grep XROOTD | tr -s ' ' | cut -d ' ' -f 3)
+		redirector=$(python GetSiteInfo.py ${site_alias} | grep XROOTD | tr -s ' ' | cut -d ' ' -f 2)
 		# redirector=${redirector%?}
 		full_name=${redirector}//${FILE}
-		#echo file = ${FILE}, site = ${site_alias}, redirector = ${redirector}
+		echo file = ${FILE}, site = ${site_alias}, redirector = ${redirector}
 		#echo full name =  $full_name
 		echo $full_name >> $out_file
 	fi

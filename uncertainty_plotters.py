@@ -7,9 +7,10 @@ import numpy as np
 from uncertainty_helpers import get_ratio, ptmin_global, ptmax_global
 from coffea.lookup_tools import extractor
 from scipy.optimize import curve_fit
+from correction_fitter_helpers import inflate_smallest_std
 
 color_scheme = {key: cycler_vals
-    for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 's', 'q'])}
+    for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 's', 'q', 'cs'])}
 color_scheme_antiflav = {key: cycler_vals
     for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'udbar', 'cbar', 'bbar', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 'sbar', 'qbar'])}
 color_scheme = color_scheme | color_scheme_antiflav
@@ -17,7 +18,7 @@ color_scheme = color_scheme | color_scheme_antiflav
 legend_dict = {'g': 'Gluons', 'q': 'Quarks', 'ud':'UpDown', 'b': 'Bottom', 'c': 'Charm', 's': 'Strange', 'unmatched': 'Unmatched'}
 from fileNames.available_datasets import legend_labels
 legend_dict_short = {'g': 'g',
-                     'ud': 'ud', 'q':'q', 'b': 'b', 'c': 'c', 's':'s',
+                     'ud': 'ud', 'q':'q', 'b': 'b', 'c': 'c', 's':'s', 'cs':'cs',
                      'unmatched': 'unmatched',
                      'udbar': '$\overline{ud}$', 'qbar':'$\overline{q}$', 'bbar': '$\overline{b}$', 'cbar': '$\overline{c}$', 'sbar':'$\overline{s}$',
                      'QCD': legend_labels["QCD"]["lab"], 'TTBAR': legend_labels["ttbar"]["lab"], 'DY': legend_labels["DY"]["lab"] }
@@ -73,6 +74,7 @@ def plot_Efractions(sampledict, etaidx, jeteta_bins, ptbins, legenddict=None, sa
     xlims = ax.get_xlim()
 
     ax.set_xticks([])
+    ax.hlines(0,8,10000, linestyles='--',color="black", linewidth=1,)
     ax.set_xticks([10, 20, 50, 100, 200, 500, 1000, 2000, 5000])
     ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
     # ax.get_yaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
@@ -96,10 +98,12 @@ def plot_Efractions(sampledict, etaidx, jeteta_bins, ptbins, legenddict=None, sa
         if not os.path.exists("fig/fractions"):
             os.mkdir("fig/fractions")
 
-        fig_name = 'fig/fractions/fraction'+"".join(samples)
+        etastr = jeteta_bins.idx2str(etaidx)
+        fig_name = 'fig/fractions/fraction_'+etastr+"_"+"_".join(samples)
         print("Saving plot with the name = ", fig_name)
         plt.savefig(fig_name+'.pdf');
         plt.savefig(fig_name+'.png');
+    # fig.close()
 
 from helpers import hist_div, hist_add, hist_mult
 def plot_Efractions_ratio(sampledict, etaidx, jeteta_bins, ptbins, legenddict=None, saveplot=False):
@@ -107,9 +111,9 @@ def plot_Efractions_ratio(sampledict, etaidx, jeteta_bins, ptbins, legenddict=No
     ptbins_c = ptbins.centres
     ptbins_e = ptbins.edges
 
-    ### Check that Herwig is the first sample and Pythia the second
-    if not ('Her' in samples[1] and 'Py' in samples[0]):
-        raise ValueError('key in the dictionary happened to get reversed')
+    # ### Check that Herwig is the first sample and Pythia the second
+    # if not ('Her' in samples[1] and 'Py' in samples[0]):
+    #     raise ValueError('key in the dictionary happened to get reversed')
     
     
     qfracs0, qfrac_var0, spline0, spline2D0 = sampledict[samples[0]]
@@ -151,6 +155,7 @@ def plot_Efractions_ratio(sampledict, etaidx, jeteta_bins, ptbins, legenddict=No
 
     xlims = ax_main.get_xlim()
 
+    ax_main.hlines(0,8,10000, linestyles='--',color="black", linewidth=1,)
     ax_main.set_xticks([])
     ax_main.set_xticks([10, 20, 50, 100, 200, 500, 1000, 2000, 5000])
     ax_main.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
@@ -221,17 +226,17 @@ def plot_Efractions_ratio(sampledict, etaidx, jeteta_bins, ptbins, legenddict=No
     ax_ratio.set_yticks(ax_ratio.get_yticks()[:-1])
     ax_ratio.set_yticklabels(tick_labels)
     ax_ratio.set_xlabel('$p_{T,ptcl}$ (GeV)')
-
     ax_ratio.set_ylabel("Her7/Py8")
     if saveplot:
         if not os.path.exists("fig/fractions"):
             os.mkdir("fig/fractions")
 
-        fig_name = 'fig/fractions/fraction'+"".join(samples)
+        etastr = jeteta_bins.idx2str(etaidx)
+        fig_name = 'fig/fractions/fraction_'+etastr+"_"+"_".join(samples)
         print("Saving plot with the name = ", fig_name)
         plt.savefig(fig_name+'.pdf');
         plt.savefig(fig_name+'.png');
-
+    # fig.close()
 
 def plot_spectra(histdict, labels, flav, etaidx, jeteta_bins, ptbins, saveplot=True, plotvspt=True):
     samples = list(histdict.keys())
@@ -325,7 +330,7 @@ def plot_spectra(histdict, labels, flav, etaidx, jeteta_bins, ptbins, saveplot=T
         plt.savefig(fig_name+'.png');
 
     plt.show()
-1;
+    # fig.close()
 
 from uncertainty_helpers import get_ratio, read_data2
 
@@ -347,12 +352,25 @@ color_scheme2 = color_scheme.copy()
 color_scheme2['QCD, 3 jets'] = {'color': 'brown', 'marker': 'o'}
 color_scheme2['DY, 2 jets'] = {'color': 'cyan', 'marker': 'o'}
 
-def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c, eta_binning_str, correction_txt_dir, correction_txt, divide=False, inverse=False, use_recopt=False, plotsimfit=False):
+def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c,
+                                   eta_binning_str, 
+                                   evaluator,
+                                   evaluator_names:dict,
+                                   divide:bool=False,
+                                   inverse:bool=False,
+                                   use_recopt:bool=False,
+                                   plotsimfit:bool=False,
+                                   plotnewfit:bool=True,
+                                   plotcorrectionratios:bool=False,
+                                   inflate_smallest_std_bool:bool=True,
+                                   show_original_uncertainties:bool=True,
+                                   ):
     ''' Put ratio plots of many all flavors at the same place. Reproduce Fig. 31 in arXiv:1607.03663
     Output, polynomial coeficients of the data ratio fit
-    divide: True if divide Herwig by Pythia, False if subtract
+    divide: True if divide Herwig by Pythia, False if subtract Pythia from Herwig
     inverse: True if plot corrections, False if plot responses
     use_recopt:  True if use reco pt, False if use gen pt
+    plotcorrectionratios: True if plot the curves obtained from fitting the individual corrections and then taking ratios of them
     '''        
     mean_name = "Median"
     mean_name_std = mean_name+'Std'
@@ -379,19 +397,14 @@ def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c, eta_binn
     xvals_d = np.array([read_data2("MeanRecoPt", samp, flav, eta_binning_str)[start:end,etaidx] for samp in denom_samples])
 #     print('etaidx = ', etaidx)
 
-    #### Read the fitted corrections
-    corr_loc_Sum20_Py = [f"* * {correction_txt_dir}/{correction_txt}{eta_binning_str}.txt"]
-    corr_loc_Sum20_Her = [f"* * {correction_txt_dir}/{correction_txt}_Her{eta_binning_str}.txt"]
-    if plotsimfit:
-        corr_loc_Sum20_Py_simfit = [f"* * {correction_txt_dir}/{correction_txt}_simfit{eta_binning_str}.txt"]
-        corr_loc_Sum20_Her_simfit = [f"* * {correction_txt_dir}/{correction_txt}_simfit_Her{eta_binning_str}.txt"]
-    ext = extractor()
-    if plotsimfit:
-        ext.add_weight_sets(corr_loc_Sum20_Py+corr_loc_Sum20_Her+corr_loc_Sum20_Py_simfit+corr_loc_Sum20_Her_simfit)
-    else:
-        ext.add_weight_sets(corr_loc_Sum20_Py+corr_loc_Sum20_Her)
-    ext.finalize()
-    evaluator = ext.make_evaluator()
+    # #### Read the fitted corrections
+    # corr_loc_Sum20_Py = [f"* * {correction_txt_dir}/{correction_txt}{eta_binning_str}.txt"]
+    # corr_loc_Sum20_Her = [f"* * {correction_txt_dir}/{correction_txt}_Her{eta_binning_str}.txt"]
+    # if plotsimfit:
+    #     corr_loc_Sum20_Py_simfit = [f"* * {correction_txt_dir}/{correction_txt}_simfit{eta_binning_str}.txt"]
+    #     corr_loc_Sum20_Her_simfit = [f"* * {correction_txt_dir}/{correction_txt}_simfit_Her{eta_binning_str}.txt"]
+    # ext = extractor()
+
         
     #### Clean and set up the data for plotting
     yvals[(yvals==0) | (np.abs(yvals)==np.inf)] = np.nan
@@ -402,7 +415,13 @@ def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c, eta_binn
         ratio_unc = ((stds / yvals_d)**2 + (yvals/yvals_d**2 * stds_d)**2)**(1/2)
     else:
         ratio_unc = (stds**2+stds_d**2)**(1/2)
-    
+
+    ratio_unc_plot = ratio_unc.copy()
+    if inflate_smallest_std_bool:
+        ratio_unc = inflate_smallest_std(ratio_unc)
+    if not show_original_uncertainties:
+        ratio_unc_plot = ratio_unc.copy()
+
     if not use_recopt:
         xvals = ptbins_c[start:end]    
         
@@ -412,39 +431,61 @@ def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c, eta_binn
         axis.set_minor_locator(mpl.ticker.AutoMinorLocator())
         
     #### Plot the points
-    for yval, std, samp in zip(ratios, ratio_unc, sample_lab):
+    for yval, std, samp in zip(ratios, ratio_unc_plot, sample_lab):
         ax.errorbar(xvals, yval, yerr=std,
                     linestyle="none", label=legend_dict_short[samp], **color_scheme2[samp],
                     capsize=1.6, capthick=0.7, linewidth=1.0)
        
     #### Plot pre-fitted curves
-    for fit_samp, lab in zip(['J', 'T'], ['QCD', 'TTBAR']):
-        etaval = jeteta_bins.centres[etaidx]
-        xvals_cont = np.geomspace(np.min(xvals), np.max(xvals), 100)
-        yvals_cont = evaluator[f'{correction_txt}_Her{eta_binning_str}_{flav}{fit_samp}'](np.array([etaval]),xvals_cont)
-        yvals_cont_d = evaluator[f'{correction_txt}{eta_binning_str}_{flav}{fit_samp}'](np.array([etaval]),xvals_cont)
+    xvals_cont = np.geomspace(np.min(xvals), np.max(xvals), 100)
+    etaval = jeteta_bins.centres[etaidx]
+    if plotcorrectionratios:
+        for fit_samp, lab in zip(['J', 'T'], ['QCD', 'TTBAR']):
+            eva = evaluator[f'{evaluator_names["Sum20Her"]}_{flav}{fit_samp}']
+            eva_d = evaluator[f'{evaluator_names["Sum20Py"]}_{flav}{fit_samp}']
+            corr_etabins = eva._bins['JetEta'] 
+            corr_bin_idx = np.searchsorted(corr_etabins, etaval, side='right')-1
+            ptmax = list(eva._eval_clamp_maxs.values())[0][corr_bin_idx]
+            ptmax_d = list(eva_d._eval_clamp_maxs.values())[0][corr_bin_idx]
+            ptmax = min([ptmax, ptmax_d])
 
-        if inverse==True:
-            yvals = 1/yvals
-            yvals_d = 1/yvals_d
-            ### Error propagation
-            stds = yvals**2*stds
-            stds_d = yvals_d**2*stds_d
+            yvals_cont = eva(np.array([etaval]),xvals_cont)
+            yvals_cont_d = eva_d(np.array([etaval]),xvals_cont)
 
-        if inverse==False:
-            yvals_cont = 1/yvals_cont
-            yvals_cont_d = 1/yvals_cont_d
+            if inverse==True:
+                yvals = 1/yvals
+                yvals_d = 1/yvals_d
+                ### Error propagation
+                stds = yvals**2*stds
+                stds_d = yvals_d**2*stds_d
 
-        ratios_cont = get_ratio(yvals_cont, yvals_cont_d, divide)
-        ax.plot(xvals_cont, ratios_cont, markersize=0, **color_scheme[lab], label=legend_dict_short[lab]+' fit')
+            if inverse==False:
+                yvals_cont = 1/yvals_cont
+                yvals_cont_d = 1/yvals_cont_d
+            
+            ratios_cont = get_ratio(yvals_cont, yvals_cont_d, divide)
+            ratios_cont[xvals_cont>ptmax] = ratios_cont[np.searchsorted(ratios_cont, ptmax)-1]
+            ax.plot(xvals_cont, ratios_cont, markersize=0, **color_scheme[lab], label=legend_dict_short[lab]+' fit')
 
     if plotsimfit:
-        yvals_cont_simfit = evaluator[f'{correction_txt}_simfit_Her{eta_binning_str}_{flav}J'](np.array([etaval]),xvals_cont)
-        yvals_cont_d_simfit = evaluator[f'{correction_txt}_simfit{eta_binning_str}_{flav}J'](np.array([etaval]),xvals_cont)
+        eva = evaluator[f'{evaluator_names["Sum20Her_simfit"]}_{flav}J']
+        eva_d = evaluator[f'{evaluator_names["Sum20Py_simfit"]}_{flav}J']
+        corr_etabins = eva._bins['JetEta'] 
+        corr_bin_idx = np.searchsorted(corr_etabins, etaval, side='right')-1
+        ptmax = list(eva._eval_clamp_maxs.values())[0][corr_bin_idx]
+        ptmax_d = list(eva_d._eval_clamp_maxs.values())[0][corr_bin_idx]
+        ptmax = min([ptmax, ptmax_d])
+        # ptmax = max(ptbins_c[ptbins_c<ptmax])
+        yvals_cont_simfit = eva(np.array([etaval]),xvals_cont)
+        yvals_cont_d_simfit = eva_d(np.array([etaval]),xvals_cont)
+
+        
         yvals_cont_simfit = 1/yvals_cont_simfit
         yvals_cont_d_simfit = 1/yvals_cont_d_simfit
         ratios_cont_simfit = get_ratio(yvals_cont_simfit, yvals_cont_d_simfit, divide)
-        ax.plot(xvals_cont, ratios_cont_simfit, markersize=0, label='simultaneous fit')
+        # breakpoint()
+        ratios_cont_simfit[xvals_cont>ptmax] = ratios_cont_simfit[np.searchsorted(xvals_cont,ptmax)]
+        ax.plot(xvals_cont, ratios_cont_simfit, markersize=0, label='two fit difference')
 
     ax.set_xscale('log')
     xlims = ax.get_xlim()
@@ -479,7 +520,8 @@ def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c, eta_binn
     poly4fun = lambda x, p: poly4lims(x, xfitmin, xfitmax, *p)
     y_poly4 = poly4fun(xvals_cont, p_poly4)
     # y_poly4_now = poly4fun(xvals_cont, p_poly4_1)
-    # ax.plot(xvals_cont, y_poly4, label=r'Poly, n=4' ,linewidth=2.0, markersize=0);
+    if plotnewfit:
+        ax.plot(xvals_cont, y_poly4, label=r'Poly, n=4' ,linewidth=2.0, markersize=0);
     ####################### End fit ####################
 
     ####################### Calculate resonable limits excluding the few points with insane errors

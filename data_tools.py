@@ -17,8 +17,15 @@ def match_to_filename(keys, data_tag):
 #         raise ValueError(f"More than one key in [{keys}] matches the given data_tag = {data_tag}")
 #     elif len(matched)==1:
 #         return keys[matched[0]]
+import json
+def read_data_json(json_file):
+    with open(json_file, 'r') as json_file:
+        json_data = json.load(json_file)
+    return json_data
 
 def make_fit_config(tag):
+    ''' Determine the config for running the fit_response_distributions.py from the data_tag.
+    '''
     eta_match = match_to_filename(['_CoarseCalo', '_JERC', '_CaloTowers', '_Summer20Flavor', '_onebin'], tag)
     if eta_match is None:
         eta_binning = "HCalPart"
@@ -76,7 +83,32 @@ def make_fit_config(tag):
     return config, tag
 
 
-def read_or_recreate_data(name, flavor, tag, path='out_txt'):
+def read_or_recreate_data(tag, path='out_txt'):
+    ''' Read the fit results from a json file.
+    If the file does not exist, but in the `out` directory there is a coffea file with the given tag,
+     offer to the user to create the fits by running `fit_response_distributions.py`.
+    '''
+    file_path = path+f'/response_fit_results{tag}.json'
+    if not os.path.exists(file_path):
+        config, cleaned_tag = make_fit_config(tag)
+        # breakpoint()
+        if os.path.exists(path+f'/../out/CoffeaJERCOutputs_L5_{cleaned_tag}.coffea'):
+            print(f"The text file with fit results {file_path} does not exist, but the output histograms in {path+f'/../out/CoffeaJERCOutputs_L5_{cleaned_tag}.coffea'} do exist.")
+            create_file = input("Do you want to create the fit results? (yes/no): ")
+            if create_file.lower() == 'yes' or create_file.lower() == '' or create_file.lower() == 'y':
+                fit_response_distributions(cleaned_tag, config=config)
+                if not os.path.exists(file_path):
+                    raise FileNotFoundError(f"File creation failed. The file {file_path} does not exist. The file tag used {tag}")
+            else:
+                raise FileNotFoundError(f"The file {file_path} does not exist. The file tag used {tag}")
+        else:
+            raise FileNotFoundError(f"The file {file_path} does not exist. The file tag used {tag}")
+
+    return read_data_json(file_path)
+
+def read_or_recreate_data_txt(name, flavor, tag, path='out_txt'):
+    ''' Same as `read_or_recreate_data`, but for the text files with the fit results. 
+    '''
     file_path = path+'/EtaBinsvsPtBins'+name+'_'+flavor+tag+'.csv'
     if not os.path.exists(file_path):
         config, cleaned_tag = make_fit_config(tag)
