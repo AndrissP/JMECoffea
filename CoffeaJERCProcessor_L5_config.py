@@ -1,4 +1,4 @@
-processor_dependencies = ['LHE_flavour.py', 'common_binning.py', 'JERCProcessorcuts.py']
+processor_dependencies = ['LHE_flavour.py', 'common_binning.py', 'JERCProcessorcuts.py', 'is_b_had.py']
 
 processor_config = {
     # cut: {cut_parameters}
@@ -13,14 +13,16 @@ processor_config = {
     "leading_jet_and_alpha_cut":{
     # Alpha cut not used (alpha=1) since run 2 because the large pileup causes a bias
         "apply":True,
-        "alphaQCD": 0.3,
-        "alphaDY":  0.3,
+        "alphaQCD": 1,
+        "alphaDY":  1,
         "NjetsQCD": 3, #-1 for all jets
         "NjetsDY":  2,
+        "ptused":   "gen",
+        "sort":     "gen"
     },
     "dphi_separation":{
     # for back-to-back selection, set dphi_DY=2.7 and dphi_QCD=2.7
-        "apply":True,
+        "apply":False,
         "dphi_DY": 2.7,
         "dphi_QCD": 2.7,
     },
@@ -42,5 +44,7 @@ processor_config = {
     "use_gen_weights": False,
     "use_pu_weights": True,
     "split_ISR_FSR_gluons": False,  # based on if parton flavor overlaps with LHE flavor for some samples it can be possible to split FSR and ISR
+    "split_gluon_split_bs": True,
+    "split_gluon_split_cs": True,
     # ... Add more cuts and parameters as needed
 }

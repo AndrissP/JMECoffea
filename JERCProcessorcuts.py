@@ -26,11 +26,12 @@ def jet_iso_cut(reco_jets, dr_cut=0.8):
     jet_iso_mask = ~ ak.any((1e-10<drs) & (drs<dr_cut), axis=2 )
     return reco_jets[jet_iso_mask]
 # @profile
-def leading_jet_and_alpha_cut(reco_jets, leptons, events, dataset, alphaQCD, alphaDY, NjetsQCD, NjetsDY):
+def leading_jet_and_alpha_cut(reco_jets, leptons, events, dataset, alphaQCD, alphaDY, NjetsQCD, NjetsDY, ptused="reco", sort="reco"):
     '''
     Selects the leading generator jets and performs the alpha cut
     Alpha cut = cut on the additional jet activity: to avoid effects due to a non-physical jet spectrum in the MC
-    Output reco_jets are sorted according to the matched_gen pt.
+    # Output: reco_jets are sorted according to the matched_gen pt.
+    ptused: "reco" or "gen" - which pt to use for the alpha cut
     '''
     if "QCD" in dataset:
         if NjetsQCD!=-1:
@@ -39,11 +40,17 @@ def leading_jet_and_alpha_cut(reco_jets, leptons, events, dataset, alphaQCD, alp
             leading_gen_jet_indices = ak.argsort(reco_jets.matched_gen.pt, axis=1, ascending=False)[:,:]
         reco_jets = reco_jets[leading_gen_jet_indices]
 
+        ## sort back according to jet pt
+        if sort=="reco":
+            leading_reco_jet_indices = ak.argsort(reco_jets.pt, axis=1, ascending=False)
+            reco_jets = reco_jets[leading_reco_jet_indices]
+
         if NjetsQCD>2 or NjetsQCD==-1:
+            jetpt = reco_jets.pt if ptused=="reco" else reco_jets.matched_gen.pt
             # To correctly/safely treat the cases where there are less then 3(2) jets in QCD (DY) left after the cuts
             # pad nons to the correct size of the jets and then accept all the events where there are less than 3(2) jets assuming that all the bad jets where already cut out
-            gen_jetpt = ak.pad_none(reco_jets.matched_gen.pt, 3, axis=1, clip=False)
-            alpha = gen_jetpt[:,2]*2/(gen_jetpt[:,0]+gen_jetpt[:,1])
+            jetpt = ak.pad_none(jetpt, 3, axis=1, clip=False)
+            alpha = jetpt[:,2]*2/(jetpt[:,0]+jetpt[:,1])
             alpha = ak.fill_none(alpha,0)
             reco_jets = reco_jets[alpha<alphaQCD] #[:,:NjetsQCD]
             events = events[alpha<alphaQCD]
@@ -56,9 +63,15 @@ def leading_jet_and_alpha_cut(reco_jets, leptons, events, dataset, alphaQCD, alp
             leading_gen_jet_indices = ak.argsort(reco_jets.matched_gen.pt, axis=1, ascending=False)[:,:]
         reco_jets = reco_jets[leading_gen_jet_indices]
 
+        ## sort back according to jet pt
+        if sort=="reco":
+            leading_reco_jet_indices = ak.argsort(reco_jets.pt, axis=1, ascending=False)
+            reco_jets = reco_jets[leading_reco_jet_indices]
+
         if NjetsDY>1 or NjetsDY==-1:
-            gen_jetpt = ak.pad_none(reco_jets.matched_gen.pt, 2, axis=1, clip=False)
-            alpha = gen_jetpt[:,1]/ak.sum(leptons.pt,axis=1)
+            jetpt = reco_jets.pt if ptused=="reco" else reco_jets.matched_gen.pt
+            jetpt = ak.pad_none(jetpt, 2, axis=1, clip=False)
+            alpha = jetpt[:,1]/ak.sum(leptons.pt,axis=1)
             alpha = ak.fill_none(alpha,0)
             reco_jets = reco_jets[alpha<alphaDY] #[:,:NjetsDY]
             events = events[alpha<alphaDY]
@@ -228,6 +241,7 @@ def correct_jets(selected_jets, selectedEvents, processor):
     reco_jets = processor.jet_factory.build(selected_jets, lazy_cache=events_cache)
     return reco_jets
 
+# @profile
 def apply_jetNevent_cuts(events, cfg, cutflow_evts, cutflow_jets, processor, dataset):
     
     ############ Event Cuts ############

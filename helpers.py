@@ -343,6 +343,14 @@ composite_flavor_dict = {
     'cs': ['c', 's'],
     'csbar': ['cbar', 'sbar'],
     # 'g': ['ISR_gluon', 'FSR_gluon'],
+    # 'b' : ['b_gluon_splitting', 'b_prompt'],
+    # 'bbar' : ['bbar_gluon_splitting', 'bbar_prompt'],
+    'b_gluon_splitting' : ['b_gluon_splitting', 'bbar_gluon_splitting'],
+    'b_prompt' : ['b_prompt', 'bbar_prompt'],
+    'c_gluon_splitting' : ['c_gluon_splitting', 'cbar_gluon_splitting'],
+    'c_prompt' : ['c_prompt', 'cbar_prompt'],
+    'b': ['b_gluon_splitting', 'bbar_gluon_splitting', 'b_prompt', 'bbar_prompt'],
+    'c': ['c_gluon_splitting', 'cbar_gluon_splitting', 'c_prompt', 'cbar_prompt'],
 }
 
 def get_flavor_antiflavor_list(flavors):

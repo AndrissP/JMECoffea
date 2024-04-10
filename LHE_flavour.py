@@ -157,3 +157,15 @@ def get_LHE_flavour(reco_jets, events):
 
     reco_jets["LHE_flavour"] = ak.unflatten(LHE_flavour_np, n_jets_per_event) 
     return reco_jets
+
+
+def is_bhad(pdgId):
+    pdgId_str = str(np.abs(pdgId))
+    if len(pdgId_str)<3:
+        return False
+    elif pdgId_str[0]=='5':
+        return True
+    elif len(pdgId_str)>4 and pdgId_str[-3]=='5':
+        return True
+    else:
+        return False

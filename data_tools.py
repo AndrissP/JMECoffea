@@ -18,9 +18,10 @@ def match_to_filename(keys, data_tag):
 #     elif len(matched)==1:
 #         return keys[matched[0]]
 import json
-def read_data_json(json_file):
-    with open(json_file, 'r') as json_file:
+def read_data_json(json_file_name):
+    with open(json_file_name, 'r') as json_file:
         json_data = json.load(json_file)
+    print("Read data from ", json_file_name)
     return json_data
 
 def make_fit_config(tag):

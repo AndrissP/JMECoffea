@@ -15,6 +15,7 @@ def make_comparison_plot(data_dict,
                               etabins=JetEtaBins("HCalPart", absolute=True), #np.array(JERC_Constants.etaBinsEdges_CaloTowers_full()),
                               ptbins=PtBins("MC_truth"), #np.array(JERC_Constants.ptBinsEdgesMCTruth()),
                               binidx=0, flav='b',
+                              pt_min = 20,
                               ratio_name='ratio',
                               inverse=True, plotvspt=True, ratio_ylim=None,
                               reset_colors = True,
@@ -29,7 +30,7 @@ def make_comparison_plot(data_dict,
    
     ########### Retreive the data from the dictionary and some logic with it ############
     keys = [key for key in data_dict.keys()]
-    start = ptbins.get_bin_idx(20) if plotvspt else 0 #np.searchsorted(ptbins, 20, side='left')
+    start = ptbins.get_bin_idx(pt_min) if plotvspt else 0 #np.searchsorted(ptbins, 20, side='left')
     end = ptbins.nbins if plotvspt else etabins.nbins
 
     data_range = tuple([range(start,end),binidx]) if plotvspt else tuple([binidx, range(start,end)])

@@ -9,6 +9,7 @@ from memory_profiler import profile
 from common_binning import JERC_Constants
 # import JERCProcessorcuts as cuts
 from JERCProcessorcuts import apply_jetNevent_cuts
+from is_b_had import find_gluon_split_jets
 
 # workaround to get a locally installed coffea and awkwrd version using lch on lxplus
 # comment out or replace the path if I happened to forget to remove these lines before pushing:
@@ -51,6 +52,7 @@ class Processor(processor.ProcessorABC):
         self.cfg = processor_config
         self.jetflavour = processor_config["jetflavour"]
         self.split_ISR_FSR_gluons = processor_config["split_ISR_FSR_gluons"]
+        self.split_gluon_split_bs = processor_config["split_gluon_split_bs"]
 
         ext = extractor()
         ext.add_weight_sets([
@@ -102,6 +104,20 @@ class Processor(processor.ProcessorABC):
             self.flavor2partonNr['FSR_gluon'] = 21
             self.flavor2partonNr['ISR_gluon'] = 21
             self.flavor2partonNr.pop('g')
+
+        if self.split_gluon_split_bs:
+            self.flavor2partonNr['b_gluon_splitting'] = 5
+            self.flavor2partonNr['b_prompt'] = 5
+            self.flavor2partonNr['bbar_gluon_splitting'] = -5
+            self.flavor2partonNr['bbar_prompt'] = -5
+            self.flavor2partonNr.pop('b')
+            self.flavor2partonNr.pop('bbar')
+            self.flavor2partonNr['c_gluon_splitting'] = 4
+            self.flavor2partonNr['c_prompt'] = 4
+            self.flavor2partonNr['cbar_gluon_splitting'] = -4
+            self.flavor2partonNr['cbar_prompt'] = -4
+            self.flavor2partonNr.pop('c')
+            self.flavor2partonNr.pop('cbar')
         
         self.flavors = self.flavor2partonNr.keys() #['b', 'c', 'u', 'd', 's', 'g', 'bbar', 'cbar', 'ubar', 'dbar', 'sbar', 'untagged']
 
@@ -144,6 +160,11 @@ class Processor(processor.ProcessorABC):
         output['cutflow_events'] = hist.Hist(cutflow_axis, storage="weight", label="N events")
         output['cutflow_jets'] = hist.Hist(cutflow_axis, storage="weight", label="N jets")
         output['sum_weights'] = hist.Hist(cutflow_axis, storage="weight", label="sum of weights")
+        if 'LHEWeight' not in events.fields: ### no LHEWeight.originalXWGTUP stored in standalone Pythia8 but Generator.weight instead
+            gen_weights_pre = events.Generator.weight
+        else:
+            gen_weights_pre = events.LHEWeight.originalXWGTUP
+        output['sum_weights'].fill(cutflow='sum_weights', weight=ak.sum(gen_weights_pre))
 
         dataset = events.metadata['dataset']
         selectedEvents, reco_jets, cutflow_evts, cutflow_jets = apply_jetNevent_cuts(events, self.cfg, output['cutflow_events'], output['cutflow_jets'], self, dataset)
@@ -167,8 +188,8 @@ class Processor(processor.ProcessorABC):
         shapes_jets = ak.num(gen_jets.pt) #for event weights
         gen_jetpt  = ak.flatten(gen_jets.pt).to_numpy( allow_missing=True)
         gen_jeteta = ak.flatten(gen_jets.eta).to_numpy( allow_missing=True)
-        jetpt      = ak.flatten(reco_jets.pt).to_numpy( allow_missing=True)
         # jeteta     = ak.flatten(reco_jets.eta).to_numpy( allow_missing=True)
+        jetpt      = ak.flatten(reco_jets.pt).to_numpy( allow_missing=True)
 
         # ptresponse_np = jetpt / gen_jetpt 
         # correction_pos_pt = (len(self.ptbins_closure)
@@ -200,6 +221,68 @@ class Processor(processor.ProcessorABC):
         if self.split_ISR_FSR_gluons:
             masks['FSR_gluon'] = ak.flatten((reco_jets["partonFlavour"] == 21) & (reco_jets["LHE_flavour2"] != 21)).to_numpy( allow_missing=True)
             masks['ISR_gluon'] = ak.flatten((reco_jets["partonFlavour"] == 21) & (reco_jets["LHE_flavour2"] == 21)).to_numpy( allow_missing=True)
+        if self.split_gluon_split_bs:
+            ''' Split jets into promt and ones comming from gluon splitting. 
+            To reduce the memory consumption, I had to select events that have b/c jets before applying the check. Then to make it of the same size as the initial events, one has to do some reshufling
+            '''
+            has_b_jet = ak.num(gen_jets[reco_jets.partonFlavour==5])>0
+            # has_b_jet = [True]*len(selectedEvents) 
+            events_with_bs = selectedEvents[has_b_jet]
+            is_b_jet = reco_jets.partonFlavour==5
+            b_jets = gen_jets[is_b_jet][has_b_jet]
+            genparts = events_with_bs.GenPart[np.abs(events_with_bs.GenPart.pdgId)>499]
+            is_from_gluon_splitting, is_not_from_gluon_splitting = find_gluon_split_jets(genparts, b_jets, quark_type='b')
+
+            b_gluon_splitting = np.zeros(sum(shapes_jets), dtype=bool)
+            b_gluon_splitting[ak.flatten(is_b_jet)] = ak.flatten(is_from_gluon_splitting)
+            b_prompt = np.zeros(sum(shapes_jets), dtype=bool)
+            b_prompt[ak.flatten(is_b_jet)] = ak.flatten(is_not_from_gluon_splitting)
+            masks['b_gluon_splitting'] = b_gluon_splitting
+            masks['b_prompt'] = b_prompt
+
+            has_bbar_jet = ak.num(gen_jets[reco_jets.partonFlavour==-5])>0
+            events_with_bbars = selectedEvents[has_bbar_jet]
+            is_bbar_jet = reco_jets.partonFlavour==-5
+            bbar_jets = gen_jets[is_bbar_jet][has_bbar_jet]
+            genparts = events_with_bbars.GenPart[np.abs(events_with_bbars.GenPart.pdgId)>499]
+            is_from_gluon_splitting, is_not_from_gluon_splitting = find_gluon_split_jets(genparts, bbar_jets,  quark_type='b')
+            
+            bbar_gluon_splitting = np.zeros(sum(shapes_jets), dtype=bool)
+            bbar_gluon_splitting[ak.flatten(is_bbar_jet)] = ak.flatten(is_from_gluon_splitting)
+            bbar_prompt = np.zeros(sum(shapes_jets), dtype=bool)
+            bbar_prompt[ak.flatten(is_bbar_jet)] = ak.flatten(is_not_from_gluon_splitting)
+            masks['bbar_gluon_splitting'] = bbar_gluon_splitting
+            masks['bbar_prompt'] = bbar_prompt
+
+            has_c_jet = ak.num(gen_jets[reco_jets.partonFlavour==4])>0
+            # has_b_jet = [True]*len(selectedEvents) 
+            events_with_cs = selectedEvents[has_c_jet]
+            is_c_jet = reco_jets.partonFlavour==4
+            c_jets = gen_jets[is_c_jet][has_c_jet]
+            genparts = events_with_cs.GenPart[((np.abs(events_with_cs.GenPart.pdgId)>399) & (np.abs(events_with_cs.GenPart.pdgId)<500)) | (np.abs(events_with_cs.GenPart.pdgId)>3990) ]
+            is_from_gluon_splitting, is_not_from_gluon_splitting = find_gluon_split_jets(genparts, c_jets,  quark_type='c')
+
+            c_gluon_splitting = np.zeros(sum(shapes_jets), dtype=bool)
+            c_gluon_splitting[ak.flatten(is_c_jet)] = ak.flatten(is_from_gluon_splitting)
+            c_prompt = np.zeros(sum(shapes_jets), dtype=bool)
+            c_prompt[ak.flatten(is_c_jet)] = ak.flatten(is_not_from_gluon_splitting)
+            masks['c_gluon_splitting'] = c_gluon_splitting
+            masks['c_prompt'] = c_prompt
+
+            has_cbar_jet = ak.num(gen_jets[reco_jets.partonFlavour==-4])>0
+            events_with_cbars = selectedEvents[has_cbar_jet]
+            is_cbar_jet = reco_jets.partonFlavour==-4
+            cbar_jets = gen_jets[is_cbar_jet][has_cbar_jet]
+            genparts = events_with_cbars.GenPart[((np.abs(events_with_cbars.GenPart.pdgId)>399) & (np.abs(events_with_cbars.GenPart.pdgId)<500)) | (np.abs(events_with_cbars.GenPart.pdgId)>3990) ]
+            is_from_gluon_splitting, is_not_from_gluon_splitting = find_gluon_split_jets(genparts, cbar_jets, quark_type='c')
+            
+            cbar_gluon_splitting = np.zeros(sum(shapes_jets), dtype=bool)
+            cbar_gluon_splitting[ak.flatten(is_cbar_jet)] = ak.flatten(is_from_gluon_splitting)
+            cbar_prompt = np.zeros(sum(shapes_jets), dtype=bool)
+            cbar_prompt[ak.flatten(is_cbar_jet)] = ak.flatten(is_not_from_gluon_splitting)
+            masks['cbar_gluon_splitting'] = cbar_gluon_splitting
+            masks['cbar_prompt'] = cbar_prompt
+
         masks['unmatched'] = reduce(lambda x, y: x+y, masks.values()) == 0
         # len(f"len unmatched = {len(masks['unmatched'])}")
         # print(f"len unmatched = {len(masks['unmatched'])}")
@@ -245,12 +328,11 @@ class Processor(processor.ProcessorABC):
                                                  jeteta=gen_jetetas[flav],
                                                  weight=jetpts[flav]*weights_jet[flav]
                                                 )
-        output['sum_weights'].fill(cutflow='sum_weights', weight=ak.sum(gen_weights))
+        # output['sum_weights'].fill(cutflow='sum_weights', weight=ak.sum(gen_weights))
         # allflav = [key for key in output.keys() if 'ptresponse' in key]
         # print(f"len iso jets  =  { sum([output[key].sum().value for key in allflav]) }.")
         # print(f"sum weights  =  { sum([output[key].sum().value for key in allflav]) }.")
         # print(f"output sum for {'b'} = {output['ptresponse_b'].sum().value}.")
-
         return {dataset: output}
 
     def postprocess(self, accumulator):

@@ -36,6 +36,15 @@ import importlib
 from fileNames.available_datasets import dataset_dictionary
 from helpers import get_xsecs_filelist_from_file, append_endpoint_redi
 
+import platform
+if "el7" in platform.platform():
+    lxplus7 = True
+elif "el9" in platform.platform():
+    lxplus7 = False
+else:  
+    raise ValueError(f"Platform {platform.platform()} not supported. Please use lxplus7 or lxplus9.")
+
+
 
 def run_processor(
         data_tag:str='',
@@ -76,11 +85,11 @@ def run_processor(
     
 
     tag_Lx = '_L5'                 ### L5 or L23, but L23 not supported since ages.
-    processor_name = 'CoffeaJERCProcessor'+tag_Lx
-    from CoffeaJERCProcessor_L5_config import processor_config, processor_dependencies
-    # processor_name = 'Processor_correctionlib_issue'
-    # processor_config = None
-    # processor_dependencies = []
+    # processor_name = 'CoffeaJERCProcessor'+tag_Lx
+    # from CoffeaJERCProcessor_L5_config import processor_config, processor_dependencies
+    processor_name = 'NHF_NR_processor'
+    processor_config = None
+    processor_dependencies = []
 
 
     ### name of the specific run if parameters changed used for saving figures and output histograms.
@@ -113,7 +122,7 @@ def run_processor(
     
     # ### Obtain the dataset and cross-sections from the dataset_dictionary. Define and print the information about the run.
     printout = f'Processor {processor_name} will be run on {executor}.\n'  ### to be used in the saved output to .txt
-    tag_full = tag_Lx+'_'+data_tag+add_tag
+    # tag_full = tag_Lx+'_'+data_tag+add_tag
 
     file_setup_is_none = [fileslist is None, dataset is None, data_tag == '']
     if sum(file_setup_is_none)==3:
@@ -164,7 +173,7 @@ def run_processor(
     if test_run:
         Nfiles = 1
     
-    chunksize = 40000 #40000 #25000 
+    chunksize = 20000 #40000 #25000 
     ## hard to adjust the chunksize correctly. Without LHE flavor matching 50 000/ less for dilep (40k) hadronic (35k?) is usually fine, with LHE flavor, needs to decrease to 25k.  
     # print("chunksize used = ", chunksize)
     printout_tmp = f"chunksize used = {chunksize}"
@@ -186,7 +195,7 @@ def run_processor(
             if Nfiles==-1:
                 Nfiles = len(rootfiles)
             rootfiles = rootfiles[:Nfiles]
-            has_xrootd = 'root://' in rootfiles[0]
+            has_xrootd = xrootdstr in rootfiles[0]
             prepend_str = '' if has_xrootd else xrootdstr
             if get_exact_endpoints and not has_xrootd:
             # if False:
@@ -200,7 +209,7 @@ def run_processor(
         xsec_dict = {data_tag: xsec}
         fileslist2 = []
         for file in fileslist:
-            if 'root://' in file:
+            if xrootdstr in file:
                 fileslist2.append(file)
             else:
                 fileslist2.append(xrootdstr+file)
@@ -257,7 +266,14 @@ def run_processor(
             #     )
             # else:
             #     adapt_parameters = dict()
-    
+            job_extra = {
+                    'MY.JobFlavour': '"longlunch"',
+                    'MY.AccountingGroup': '"group_u_CMST3.all"',
+                    # 'MY.WantOS': '"el7"',
+                }
+            if lxplus7:
+                job_extra['MY.WantOS'] = '"el7"'
+            print("job_extra = ", job_extra)
             cluster = CernCluster(
                 cores = 1,
                 memory = '4000MB',
@@ -271,11 +287,7 @@ def run_processor(
                     'port': 8786,
                     'host': socket.gethostname(),
                 },
-                job_extra = {
-                    'MY.JobFlavour': '"longlunch"',
-                    'MY.AccountingGroup': '"group_u_CMST3.all"',
-                    'MY.WantOS': '"el7"',
-                },
+                job_extra = job_extra,
             )
             cluster.adapt(minimum=2, maximum=300)
             # cluster.adapt(
@@ -325,7 +337,7 @@ def run_processor(
                                                   'schema': NanoAODSchema, #BaseSchema
                                                   'xrootdtimeout': 60,
                                                   'retries': 2,
-                                                  'treereduction':4,
+                                                  'treereduction':3,
     #                                               'workers': 2
                                               },
                                               chunksize=chunksize,
@@ -365,27 +377,39 @@ def main():
     parser = optparse.OptionParser(usage)
     parser.add_option('-d', '--data',        dest='data_tag',    help='data tag from the available datasets',      default=None,        type='string')
     (opt, args) = parser.parse_args()
-    data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Her', 'DY-MG-Py', 'QCD-MG-Her', 'Herwig-TTBAR', 'QCD-MG-Py', 
-    # data_tags = ['Pythia-dilep-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['QCD-Py', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-Pythia' ] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR', 
+    # data_tags = ['Herwig-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    data_tags = ['DY-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    # data_tags = ['QCD-MG-Py', 'QCD-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['Pythia-fullhad-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    data_tags = ['Herwig-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    params =      {"run_comment": 'Replace the jet matching to a more memory saving way. Will try chunksize=40k. In the previous two runs running with chunksize 35k as the ones with 40k failed because of out-of-memory in the processor step. Running on half the dataset and the full one.',
-                  "blacklist_sites":['T2_US_UCSD'],
-                  "get_exact_endpoints":True,
-                  "add_tag":'',
+    # data_tags = ['QCD-Py'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
+    params =      {"run_comment": 'Testing the alpha cut options in terms of sorting in reco or gen pt', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
+                  "blacklist_sites":[], #, 'DY-MG-Her', 'QCD-MG-Her', 'QCD-Py'
+                  "get_exact_endpoints":False,
+                #   "add_tag":'_200files',
                   "Nfiles": -1,
                   
                   } 
-    for data_tag in data_tags:
-        run_processor(data_tag=data_tag, test_run=False, executor='condor', **params)
-    # run_processor(fileslist=[
-    #                         'root://osg-se.sprace.org.br:1094//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/250000/A1EF1097-A3D4-1544-BB95-806AE84BB83E.root',
-    #                         'root://xrootd-cms.infn.it//store/mc/RunIISummer20UL18NanoAODv9/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/230000/9D0C102A-1A88-7D48-80A7-509AB9EAFD26.root',
-    #                         'root://osg-se.sprace.org.br:1094//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/2520000/2A1DBFB7-B746-9D4A-B017-E8221D4AEA6D.root',],
-    #                         executor='iterative',
-    #                         test_run=False,
-    #                         **params)
+    
+    Nfiles = -1 
+    # dataset = 'fileNames/PFNanoTTToSemiLepPowPy.txt'
+    dataset = 'Hadron_energy_fraction/fileNames/PFNanoQCD_MG_Her.txt'
+    # dataset = 'fileNames/PFNanoTTToSemiLepPowHer.txt'
+
+    xrootdstr = 'file://'
+    def txt2filesls(dataset_name):
+        with open(dataset_name) as f:
+            rootfiles = f.read().split()
+            fileslist = [xrootdstr + file for file in rootfiles]
+        return fileslist
+    fileslist = txt2filesls(dataset)[:Nfiles]
+    # for data_tag in data_tags:
+        # run_processor(data_tag=data_tag, test_run=False, executor='condor', **params)
+    run_processor(fileslist=fileslist,
+                            executor='dask',
+                            test_run=False,
+                            xrootdstr='file://',
+                            **params)
     # run_processor(fileslist=[
     #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/4988713D-E70D-E243-A384-B902119A3604.root',
     #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/519DE155-138B-DE46-92CC-6460F9172458.root',

@@ -18,7 +18,8 @@ if not os.path.exists(figdir):
     os.mkdir(figdir)
 
 
-def plot_cutflow(cutflow, tag_full, ylab, fig_name, title_name=None, alt_tick_labs=None):
+def plot_cutflow(cutflow, tag_full, ylab, fig_name, title_name=None, alt_tick_labs=None, figdir=figdir):
+    ## in the processor the cutflow is not read correctly, so one has to normalize it to match the values
     if title_name is None:
         title_name=tag_full
     fig, ax = plt.subplots()
@@ -33,7 +34,9 @@ def plot_cutflow(cutflow, tag_full, ylab, fig_name, title_name=None, alt_tick_la
         for lab, lab_txt in zip(xticklab, alt_tick_labs):
             lab.set_text(lab_txt)
     hep.label.exp_text(text=title_name, loc=0)
-
+    if not os.path.exists(figdir):
+        os.mkdir(figdir)
+        print("Created directory: ", figdir)
     fig_name = figdir+"/"+fig_name+'_'+tag_full
     print("Saving plot with the name = ", fig_name)
     plt.savefig(fig_name+'.pdf');

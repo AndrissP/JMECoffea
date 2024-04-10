@@ -10,7 +10,7 @@ import os
 from common_binning import JERC_Constants
 from helpers import legend_str_to_filename
 
-def plot_corrections(result, ptbins_c, etabins, tag, flavor, plotetavals=[0, 1.305, 2.5, 3.139], plotmean=True):
+def plot_corrections(result, ptbins_c, etabins, tag, flavor, plotetavals=[0, 1.305, 2.5, 3.139], plotmean=True, minpt=20):
     ''' plotmean: if True plot not only median but also mean
     
     '''

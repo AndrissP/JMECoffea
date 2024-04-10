@@ -2,20 +2,21 @@ header_txt = '''# L5 flavor corrections for IC5 algorithm
  [*J] (flavor * from diJet mixture)
  [*T] (flavor * from ttbar sample)
  [*S] (flavor * from simultaneous fit of diJet, ttbar and Drell-Yan)
+ [*M] (flavor * from a combination of Drell-Yan (low pt) and diJet )
  [g*] (gluonss )
  [b*] (b quarks )
  [c*] (c quarks )
  [q*] (uds quarks )
  [ud*] (ud quarks )
  [a*] (all quarks )
- parametrization: p2+p3*logPt+p4*logPt^2+p5*logPt^2+p6*logPt^3, constant if Pt<p0 or Pt>p1
+ parametrization: Pt<p0 or Pt>p1, p2,... : fitting constants
  etamin  etamax  #ofparameters  ptmin  ptmax    p0         p1        p2        p3        p4
 '''
 
 def save_correction_txt_file(txtfile_outname, fit_res_all_tags):
     '''
     Saves the corrections in the txt file with the name `txtfile_outname`.
-    fit_res_all_tags: for each correction tag (e.g., T and J), a dictionary of corrections for each flavor
+    fit_res_all_tags: for each correction tag (e.g., T, J, S, M), a dictionary of corrections for each flavor
     '''
     with open(txtfile_outname, 'w') as file:
         file.write(header_txt+'\n')
@@ -25,6 +26,46 @@ def save_correction_txt_file(txtfile_outname, fit_res_all_tags):
                 fit_res = fit_res_all[key]
                 file.write(f'[{key}]\n')
                 file.write('{1 JetEta 1 JetPt ([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(log10(x),4)) Correction L5Flavor}\n')
+                ### copy from the positive eta region into the negative
+                fit_res = np.vstack([np.hstack([np.flip(fit_res[:,0:2]*-1), np.flip(fit_res[:,2:], 0)]), fit_res])
+                for row in fit_res:
+                    row[2] = row[2]+2  #+2 because of the pt lower/higher limits that are not accounted into the # parameters before
+                    line2write = ('{:>11} '*5+'{:>13} '*(int(row[2])-2)).format(*row[:2], int(row[2]), *np.round(row[3:], 7))+'\n'
+                    file.write(line2write);
+    print("Saving the corrections with the name = ", txtfile_outname)
+
+def save_correction_txt_file_Mikko(txtfile_outname, fit_res_all_tags):
+    '''
+    Saves the corrections in the txt file with the name `txtfile_outname`.
+    fit_res_all_tags: for each correction tag (e.g., T and J), a dictionary of corrections for each flavor
+    '''
+    with open(txtfile_outname, 'w') as file:
+        # str_poly='([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*1/pow(log10(x),[5]))'
+        str_poly='([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(log10(x),4))'
+        file.write(header_txt+'\n')
+        for tag in fit_res_all_tags:
+            fit_res_all = fit_res_all_tags[tag]
+            for key in fit_res_all.keys():
+                fit_res = fit_res_all[key]
+                file.write(f'[{key}]\n')
+#                 n_add_parm = 2 #+2 because of the pt lower/higher limits that are not accounted into the # parameters before
+                if 'sM' in key:
+                    fun_tmp = Mikkofun_ud
+                    for ii in range(6,-1,-1):
+                        fun_tmp = fun_tmp.replace(f'[{ii}]', f'[{ii+5}]')
+                    fun_str = f'1/({fun_tmp})/({Mikkofun_s})'
+#                     n_add_parm+=6
+                elif 'udM' in key:
+                    fun_str = f'1/({Mikkofun_ud})'
+                elif 'M' in key:
+                    fun_tmp = Mikkofun_ud
+                    for ii in range(6,-1,-1):
+                        fun_tmp = fun_tmp.replace(f'[{ii}]', f'[{ii+4}]')
+                    fun_str = f'1/({fun_tmp})/({Mikkofun})'
+#                     n_add_parm+=6
+                else:
+                    fun_str = str_poly
+                file.write('{1 JetEta 1 JetPt '+fun_str+' Correction L5Flavor}\n')
                 ### copy from the positive eta region into the negative
                 fit_res = np.vstack([np.hstack([np.flip(fit_res[:,0:2]*-1), np.flip(fit_res[:,2:], 0)]), fit_res])
                 for row in fit_res:
@@ -156,7 +197,7 @@ def poly3_1_x(x, *p):
     res = c0+c1*xs+c2*xs**2+c3*xs**3+c4/xs**10
     return res
 
-def poly3_1_x2(x, *p):
+def poly3_1_xn(x, *p):
     c0, c1, c2, c3, c4, c5 = p
     xs = np.log10(x)
     res = c0+c1*xs+c2*xs**2+c3*xs**3+c4/xs**c5
@@ -166,6 +207,38 @@ def poly3_1_x3(x, *p):
     c0, c1, c2, c3, c4, c5 = p
     xs = np.log10(x)
     res = c0+c1*xs+c2*xs**2+c3*xs**3+c4/(xs+c5)
+    return res
+
+from helpers import gauss
+Mikkofun_ud = "[0]+[1]*pow(x,[2])+[3]*pow(x/1000.,[4])+[5]/x"
+Mikkofun = ("1+[0]*pow(x,[1])"
+		    +"+[2]/x"
+		    +"+[3]*log(x)/x"
+		    # +"+[4]*pow(x,fabs([5]))"
+            )
+Mikkofun_s = ("1+[0]*pow(x,[1])"
+		     +"+[2]*1/(2.5066*[4])*exp(-0.5*((log(x)-[3])/[4])*((log(x)-[3])/[4]))")
+
+def Mikko_fun1(x, *p):
+    c0, c1, c2, c3 = p
+    xs = np.log10(x)
+    res = (1+c0*pow(xs,c1)
+	+ c2/xs
+	+ c3*np.log10(xs)/xs
+	# + c4*pow(xs,np.abs(c5))
+    )
+    return res
+
+def Mikko_fun2(x, *p):
+    c0, c1, c2, c3, c4 = p
+    xs = np.log10(x)
+    res = (1+c0*pow(xs,c1)
+           + gauss(xs, *[c2, c3, c4]) )
+    return res
+
+def Mikko_fun_ud(x, *p):
+    c0, c1, c2, c3, c4, c5 = p
+    res = c0+c1*x**c2 +c3*(x/1000)**c4+c5/x
     return res
 
 def poly3lims(x, xmin, xmax, *p):
@@ -197,6 +270,69 @@ def two_gaus_fnc(x, *p):
 def response_fnc_raw(x, p0, p1, p2, p3, p4, p5):
     response_fnc(x, *[p0, p1, p2, p3, p4, p5])
 
+import ROOT
+
+def draw_result_root(fun, xvals, graph, num_parameters, fit_func, p0):
+    # Create canvas for plotting
+    canvas = ROOT.TCanvas("fit_canvas", "Fit Canvas", 800, 600)
+
+    # Plot the data points
+    graph.SetMarkerStyle(20)
+    graph.SetMarkerSize(1.0)
+    graph.SetMarkerColor(ROOT.kBlack)
+    graph.Draw("AP")
+
+    # Plot the initial fit with dashed line
+    initial_fit_func = ROOT.TF1("initial_fit", fun, min(xvals), max(xvals), num_parameters)
+    initial_fit_func.SetParameters(*p0)
+    initial_fit_func.SetLineColor(ROOT.kBlue)
+    initial_fit_func.SetLineStyle(ROOT.kDashed)
+    initial_fit_func.Draw("same")
+
+    # Plot the final fit with solid line
+    fit_func.SetLineColor(ROOT.kRed)
+    fit_func.Draw("same")
+
+    # Add legend
+    legend = ROOT.TLegend(0.6, 0.7, 0.9, 0.9)
+    legend.AddEntry(graph, "Data", "p")
+    legend.AddEntry(initial_fit_func, "Initial Fit", "l")
+    legend.AddEntry(fit_func, "Final Fit", "l")
+    legend.Draw()
+
+    # Show the canvas
+    canvas.Draw()
+    canvas.SaveAs('test.pdf')
+
+def fit_with_root(fun, xvals, yvals, p0, sigma, bounds=None):
+    is_good = yvals != 0
+    xvals = xvals[is_good]
+    yvals = yvals[is_good]
+    sigma = sigma[is_good]
+    num_parameters=len(p0)
+    graph = ROOT.TGraphErrors(len(xvals), np.array(xvals, dtype=np.double), np.array(yvals, dtype=np.double),
+                             np.array([0.0]*len(xvals), dtype=np.double), np.array(sigma, dtype=np.double))
+    fit_func = ROOT.TF1("fit_function", fun, min(xvals), max(xvals), 6)
+#     print(p0)
+    fit_func.SetParameters(*p0)
+    if bounds is not None:
+        for ii, bound in enumerate(bounds):
+            if None==bound or np.inf in bound or -np.inf in bound:
+                continue
+            fit_func.SetParLimits(ii, *bound)
+    graph.Fit(fit_func, "R")
+    fit_params = [fit_func.GetParameter(i) for i in range(num_parameters)]
+    return fit_params
+
+from coffea.lookup_tools.jme_standard_function import wrap_formula
+def root_to_fun(string, n_parms):
+    ps = []
+    string = string.replace('pi', 'numpy.pi')
+    for ii in range(n_parms):
+        string = string.replace(f'[{ii}]',f'p{ii}')
+        ps.append(f'p{ii}')
+    return wrap_formula(string, ['x']+ps)
+
 from scipy.stats import chi2
 import mplhep as hep
 from fileNames.available_datasets import legend_labels
@@ -227,8 +363,10 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
                            fits2plot, main_fit,
                     figdir2=figdir+'correction_fit',
                     jeteta_bins=JetEtaBins(), pt_bins=PtBins(),
-                    plot_initial_val=False,
-                    use_recopt=True, maxlimit_static_pnt=True,
+                    plot_initial_val:list=[],
+                    use_recopt=True,
+                    maxlimit_static_pnt=True,
+                    inverse=True,
                     max_point_fit_idx=3,
                     min_pt_val = None,
                     max_ptval=None,
@@ -238,7 +376,9 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
                     show_original_errorbars=False,
                     ncoefs_out=5,
                     saveplots=True,
-                    colors = None ):
+                    colors = None,
+                    fit_sample=None,
+                    custom_jet_legend=None ):
     """ fit the data and plot
     etaidx: index of the eta bin from the data in the `data_dict` to fit
     data_dict: dictionary of the data to fit
@@ -249,9 +389,10 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     figdir2: directory to save the plots
     jeteta_bins: JetEtaBins object, eta bins used for the data
     pt_bins: PtBins object, pt bins used for the data
-    plot_initial_val: if True, plot the initial values of the fit functions
+    plot_initial_val: list of functions for which to plot the initial values. Default: empty list
     use_recopt: if True, use the reco pt as the x values for the fit. Otherwise, use the pt bin centres (thus, same values for all the data samples).
     maxlimit_static_pnt: if True, find the last point where the derivative of the fit function changes sign and use it as the upper limit of the fit range.
+    inverse: if True, fit the inverse of the data (to get the correction).
     max_point_fit_idx: if `maxlimit_static_pnt` is True but the static point is too far to the left, use the `max_point_fit_idx`-th point from the end as the upper limit of the fit range.
     max_ptval: if `maxlimit_static_pnt` is False, use this value as the upper limit of the fit range.
     min_rel_uncert: minimum relative uncertainty to use for the fit. If 0, use the `min_rel_uncert_relative` to define the minimum uncertainty relative to the range.
@@ -259,6 +400,8 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     show_original_errorbars: if True, show the original errorbars of the data points.
     ncoefs_out: number of coefficients of the output function. If less than the number of coefficients of the main fit, pad with zeros.
     saveplots: if True, save the plots
+    colors: dictionary of the colors to use for the data samples. The keys are the data tags.
+    fit_sample: if not None, use all samples to fit, otherwise index of the sample to fit
     """
     ###################### Logistics with the input ######################
     keys = [key for key in data_dict.keys()]
@@ -268,7 +411,7 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
         else:
             raise ValueError(f"Remove `max_ptval` if using `maxlimit_static_pnt`. `max_ptval` given as {max_ptval} but `maxlimit_static_pnt` is set to {maxlimit_static_pnt}.")
     elif max_ptval==None:
-        max_ptval=500
+        max_ptval=5000
 
     if min_pt_val is None:
         min_pt_val = np.min(pt_bins.centres)
@@ -281,12 +424,20 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     ptmax_idx = np.searchsorted(pt_bins.centres, max_ptval, side='right')
     data_range = tuple([range(ptmin_idx,ptmax_idx), etaidx])
 
-    yvals = np.array([data_dict[key][0][data_range] for key in keys])
-    stds  = np.array([data_dict[key][1][data_range] for key in keys])
-    reco_pts  = np.array([data_dict[key][2][data_range] if len(data_dict[key][2].shape)==2 else data_dict[key][2][data_range] for key in keys])
+    yvals = np.array([data_dict[key]["Median"][data_range] for key in keys])
+    stds  = np.array([data_dict[key]["MedianStd"][data_range] for key in keys])
+    reco_pts  = np.array([data_dict[key]["MeanRecoPt"][data_range] if len(data_dict[key]["MeanRecoPt"].shape)==2 else data_dict[key]["MeanRecoPt"][data_range] for key in keys])
+
+    yvals[yvals==0] = np.nan
+    if inverse==True:
+        yvals = 1/yvals
+        ### Error propagation
+        stds = yvals**2*stds
 
     validpt_mask = ~(np.isnan(yvals) | np.isinf(yvals) | (yvals==0))
-
+    if not fit_sample is None:
+        ## don't use the samples of indices that don't match fit_sample for fitting 
+        validpt_mask[np.logical_not(np.arange(len(validpt_mask)) == fit_sample)] = False
     xvals = reco_pts if use_recopt else np.array([pt_bins.centres[data_range]]*len(yvals))
 
     ### Put the minimum limit on the relative uncertainty to min_rel_uncert
@@ -294,10 +445,10 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     # but the second case kept for a while to be consistent with the not
     if min_rel_uncert<=0:
         min_rel_uncert_tmp = min_rel_uncert_relative*(np.nanmax(yvals)-np.nanmin(yvals))
+        print('men_rel_uncert_tmp:', min_rel_uncert_tmp)
     else:
         min_rel_uncert_tmp = min_rel_uncert
     stds_orig = stds.copy()
-    # breakpoint()
     if inflate_smallest_std_bool:
         stds = inflate_smallest_std(stds)
     where_limit_std = (stds/yvals)<min_rel_uncert_tmp
@@ -325,24 +476,38 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     fitres = {}
     for fit in fits2plot:
         if len(means2fit)>(fits2plot[fit][2]+2):
-            try:
-                init_vals = fits2plot[fit][1]
-                if type(init_vals) is dict:
-                    init_vals = init_vals[flav][etaidx]
-                if len(fits2plot[fit])<4:
-                    bounds = (-np.inf, np.inf)
-                else:
-                    bounds = fits2plot[fit][3]
-                p, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, p0=init_vals, bounds=bounds)
-                p_err, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, p0=p, sigma=means_unc2fit, bounds=bounds)
-            except(RuntimeError):
-                print(f"{fit} fit failed")
-                p, p_err = [[np.nan]*fits2plot[fit][2]]*2
+            init_vals = fits2plot[fit][1]
+            fit_kwargs = {}
+            if type(init_vals) is dict:
+                fit_kwargs["p0"]= init_vals[flav][etaidx]
+            else:
+                fit_kwargs["p0"]= init_vals
+
+            if len(fits2plot[fit])>3 and fits2plot[fit][3] is not None:
+                fit_kwargs["bounds"] = fits2plot[fit][3]
+
+            if len(fits2plot[fit]) == 5: #if the fit is defined with a string, use root to fit, otherwise use scipy
+                fit_kwargs["sigma"] = means_unc2fit
+                p_err = fit_with_root(fits2plot[fit][4], ptbins2fit, means2fit, **fit_kwargs)
+            else:
+                try:
+                    p, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, **fit_kwargs)
+                    fit_kwargs["sigma"] = means_unc2fit
+                    fit_kwargs["p0"] = p
+                    p_err, arr = curve_fit(fits2plot[fit][0], ptbins2fit, means2fit, **fit_kwargs)
+                except(RuntimeError):
+                    print(f"{fit} fit failed")
+                    p, p_err = [[np.nan]*fits2plot[fit][2]]*2
             # except(TypeError):
         else:
             print(f"Too little points for {fit} fit")
             p, p_err = [[np.nan]*fits2plot[fit][2]]*2
         fitres[fit] = p_err
+
+    # convert strings for the root fits to python lamda functions
+    for fit in fits2plot:
+        if len(fits2plot[fit]) == 5:
+            fits2plot[fit][0] = root_to_fun(fits2plot[fit][4], fits2plot[fit][2])
     
     chi2s = {fit: np.sum((fits2plot[fit][0](ptbins2fit, *fitres[fit]) - means2fit)**2/means_unc2fit**2)
                  for fit in fits2plot}
@@ -391,19 +556,23 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
             color = colors[data_tag]
         else:
             color = next(ax._get_lines.prop_cycler)['color']
+        if "merged" in data_tag:
+            fun_kwargs = {'mfc':'none', 'markeredgewidth':1.2}
+        else:
+            fun_kwargs = {}
         plt.errorbar(reco_pt, yval, yerr=std, marker='o',
                     linestyle="none", label=data_tag, #{jeteta_bins.idx2plot_str(etaidx)}',
-                    capsize=1.7, capthick=0.9, linewidth=1.0, color=color)
+                    capsize=1.7, capthick=0.9, linewidth=1.0, color=color, **fun_kwargs)
         if show_original_errorbars:
             if legend_original_initiated:
                 plt.errorbar(reco_pt, yval, yerr=std_orig, marker='o',
                     linestyle="none",
-                    capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black') #, color='blue')
+                    capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black', **fun_kwargs) #, color='blue')
             else:
                 legend_original_initiated = True
                 plt.errorbar(reco_pt, yval, yerr=std_orig, marker='o',
                     linestyle="none", label=f'Original errorbars',
-                    capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black')
+                    capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black', **fun_kwargs)
     
     for fit in fits2plot:
         if np.isnan(chi2s[fit]): 
@@ -414,8 +583,9 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
         ax.plot(xplot, curve_yvals[fit], label=lab, markersize=0);
         if maxlimit_static_pnt and fit==main_fit:
             ax.plot(xplot[:xplot_max_new], curve_yvals[fit][:xplot_max_new], label=f'{fit}; range chosen', markersize=0, linewidth=0.8); #
-        if plot_initial_val and fit=="MC truth":
-            yvals_init = response_fnc(xplot, *fits2plot[fit][1])
+        # if plot_initial_val and fit=="MC truth":
+        if fit in plot_initial_val:
+            yvals_init = fits2plot[fit][0](xplot, *fits2plot[fit][1])
             ax.plot(xplot, yvals_init, label=f"Initial values for {fit}", markersize=0);
         
     ###################### Plot formalities ######################
@@ -424,7 +594,8 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     ax.set_ylim(ylim_tmp[0], ylim_tmp[1]+ylim_pad)
 
     ax.set_xlabel(r'$p_{T,reco}$ (GeV)')
-    ax.set_ylabel(r'correction (1/median)');
+    ylabel = r'correction (1/median)' if inverse else r'median response'
+    ax.set_ylabel(ylabel)
     ax.set_xscale('log')
 
     ax.set_xticks([])
@@ -432,7 +603,8 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
     # hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
     hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')
-    hep.label.exp_text(text=f'{jeteta_bins.idx2plot_str(etaidx)}; {flav} jets', loc=2, fontsize=mpl.rcParams["font.size"]/1.15)
+    jet_legend = custom_jet_legend if custom_jet_legend is not None else f'{flav} jets'
+    hep.label.exp_text(text=f'{jeteta_bins.idx2plot_str(etaidx)}; '+jet_legend, loc=2, fontsize=mpl.rcParams["font.size"]/1.15)
 
     ### hack put errorbars before the curves in the legend
     #get handles and labels

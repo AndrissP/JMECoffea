@@ -151,6 +151,7 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
                 response_hist, recopt_hist = h.add_flavors(scaled_hist[sample], flavor, combine_antiflavour) 
                 response_hist = h.rebin_hist(response_hist, 'jeteta' , jeteta_bins.edges)
                 recopt_hist = h.rebin_hist(recopt_hist, 'jeteta' , jeteta_bins.edges)
+
                 if sum_neg_pos_eta_bool==True:
                     response_hist = h.sum_neg_pos_eta(response_hist)
                     recopt_hist = h.sum_neg_pos_eta(recopt_hist)
@@ -159,16 +160,23 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
             
         response_hist, recopt_hist = h.add_flavors(hists, flavor, combine_antiflavour)
         
+        # breakpoint()
+        # print("response hist, values = ", response_hist.values()[5,45:55,jeteta_bins.get_bin_idx(4.8)])
+        # response_hist.values()[:,:,1] = 0
+        # recopt_hist.values()[:,1] = 0
+        # response_hist.values()[:,:,-1] = 0
+        # recopt_hist.values()[:,-1] = 0
         response_hist = h.rebin_hist(response_hist, 'jeteta' , jeteta_bins.edges)
         recopt_hist = h.rebin_hist(recopt_hist, 'jeteta' , jeteta_bins.edges)
 
         response_hist = h.rebin_hist(response_hist, 'pt_gen' , pt_bins.edges)
         recopt_hist = h.rebin_hist(recopt_hist, 'pt_gen' , pt_bins.edges)
-        
+
         if sum_neg_pos_eta_bool==True:
             response_hist = h.sum_neg_pos_eta(response_hist)
             recopt_hist = h.sum_neg_pos_eta(recopt_hist)
-            
+        # print("response hist, values = ", response_hist[33j,45:55,1.305j:1.566j].values().flatten())
+        # print("response hist, values = ", response_hist[33j,45:55,1.566j:1.74j].values().flatten())
         results = {key:np.zeros((pt_bins.nbins, fiteta_bins.nbins))
                       for key in ["Mean", "MeanStd", "Median", "MedianStd", "MeanRecoPt"]  }
                                 
@@ -298,21 +306,44 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     rc_bottom_def = plt.rcParams['figure.subplot.bottom']
     plt.rcParams['figure.subplot.bottom'] = 0.39
     tag_cutflow = tag_full[4:]
-    hist1 = output[list(keys)[0]] ### plotting only the first
-    if 'cutflow_events' in hist1:
-        ## drawing only for the first sample as in the hist_merged, the total number of events are normalized
-        plot_cutflow(hist1['cutflow_events'], list(keys)[0], ylab='N events', fig_name='cutflow_Nevents')
-        plot_cutflow(hist1['cutflow_jets'], list(keys)[0], ylab='N jets', fig_name='cutflow_Njets')
-        plot_cutflow(hists_merged['cutflow_jets'], tag_cutflow, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev')
-    else:
-        print("cutflow histograms cannot be drawn because the cutflow isn't split into events and jets. Potentially not all events are selected")
-        cutflow = hist1['cutflow'][['all_events', 'selected_events',  'events passing the lepton selection',  'events, alpha cut' ]]
-        plot_cutflow(cutflow, list(keys)[0], ylab='N events', fig_name='cutflow_Nevents')
+    # hist1 = output[list(keys)[0]] ### plotting only the first
 
-        cutflow = hist1['cutflow'][[ 'all_jets', 'gen_matched', 'jets, tight lepton id',
-                                        'jets, dR cut with leptons', 'jetpt cut',
-                                        'alpha cut; leading jets','iso jets']]
-        plot_cutflow(cutflow, list(keys)[0], ylab='N jets', fig_name='cutflow_Njets')
+    scale_cutflow = {key: 1 for key in output}
+    sum_cutflow = {histo_key:h.sum_subhist(output, histo_key, scale_cutflow) for histo_key in ['cutflow_events', 'cutflow_jets'] }
+
+    ### normalize the cutflow histograms to the number of events
+    def normalize_cutflow(hists_cutflow):
+        for key in ['cutflow_events', 'cutflow_jets']:
+            hists_cutflow[key].variances()[:] = hists_cutflow[key].values()
+        return hists_cutflow
+    
+    sum_cutflow = normalize_cutflow(sum_cutflow)
+    # sum_cutflow['cutflow_events'].variances()[:] = sum_cutflow['cutflow_events'].values()
+    # sum_cutflow['cutflow_jets'].variances()[:] = sum_cutflow['cutflow_jets'].values()
+    jets_pet_ev = sum_cutflow['cutflow_jets']/sum_cutflow['cutflow_events']['all_events'].value
+    plot_cutflow(sum_cutflow['cutflow_events'], tag_cutflow, ylab='N events', fig_name='cutflow_Nevents', figdir=fig_path+'/cutflow/'+tag_cutflow)
+    plot_cutflow(sum_cutflow['cutflow_jets'], tag_cutflow, ylab='N jets', fig_name='cutflow_Njets', figdir=fig_path+'/cutflow/'+tag_cutflow)
+    plot_cutflow(jets_pet_ev, tag_cutflow, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', figdir=fig_path+'/cutflow/'+tag_cutflow)
+    # if 'cutflow_events' in hists_cutflow:
+        # drawing only for the first sample as in the hist_merged, the total number of events are normalized
+    if len(list(keys))>1:
+        for key in keys:
+            cutflow = normalize_cutflow(output[key])
+
+            jets_pet_ev = cutflow['cutflow_jets']/cutflow['cutflow_events']['all_events'].value
+            plot_cutflow(cutflow['cutflow_events'], key, ylab='N events', fig_name='cutflow_Nevents', figdir=fig_path+'/cutflow/'+tag_cutflow)
+            plot_cutflow(cutflow['cutflow_jets'], key, ylab='N jets', fig_name='cutflow_Njets', figdir=fig_path+'/cutflow/'+tag_cutflow)
+            plot_cutflow(jets_pet_ev, key, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', figdir=fig_path+'/cutflow/'+tag_cutflow)
+
+    # else:
+    #     print("cutflow histograms cannot be drawn because the cutflow isn't split into events and jets. Potentially not all events are selected")
+    #     cutflow = hist1['cutflow'][['all_events', 'selected_events',  'events passing the lepton selection',  'events, alpha cut' ]]
+    #     plot_cutflow(cutflow, list(keys)[0], ylab='N events', fig_name='cutflow_Nevents')
+
+    #     cutflow = hist1['cutflow'][[ 'all_jets', 'gen_matched', 'jets, tight lepton id',
+    #                                     'jets, dR cut with leptons', 'jetpt cut',
+    #                                     'alpha cut; leading jets','iso jets']]
+    #     plot_cutflow(cutflow, list(keys)[0], ylab='N jets', fig_name='cutflow_Njets')
     plt.rcParams['figure.subplot.bottom'] = rc_bottom_def
     print('-----'*10)
     print("All done. Congrats!")
@@ -320,7 +351,7 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
 if __name__ == "__main__":
     # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
-    data_tags = ['QCD-MG-Her'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+    data_tags = ['Herwig-TTBAR'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
     # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
 
     # data_tags = ['QCD-Py_noiso'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
@@ -337,7 +368,7 @@ if __name__ == "__main__":
         ### HCalPart: bin in HCal sectors, CaloTowers: the standard JERC binning,
         ### CoarseCalo: like 'CaloTowers' but many bins united; onebin: combine all eta bins
         ### Preprocessing always done in CaloTowers. For the reponse distributions, the bins can be merged.
-        "eta_binning"         : "Summer20Flavor",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
+        "eta_binning"         : "HCalPart",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
         "pt_binning"          : "MC_truth", ### MC_truth, Uncert, Coarse, onebin
         "sum_neg_pos_eta_bool": True,  ### if combining the positive and negative eta bins
         "tag_Lx" : '_L5',                 ### L5 or L23, but L23 not supported since ages.
@@ -351,12 +382,13 @@ if __name__ == "__main__":
         ### name of the specific run if parameters changed used for saving figures and output histograms.
         "add_tag":             '',   
         ### if the fit strategy changed and the results need to be stored with a different name
-        "fit_tag":              '',   
+        "fit_tag":              '', #_remove_bad_eta_bin   
 
 
         ### Define which flavors should be fit
         "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        # "flavors": ['ISR_gluon', 'FSR_gluon'],
+        "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        # "flavors": ['b_gluon_splitting', "b_prompt", 'c_gluon_splitting', "c_prompt", 'b', 'c'],
 
         ### None if all the pt bins should be fit, otherwise a list of two numbers for the range of pt bins to fit, or just one number for a single pt bin
         "pt_to_fit": None,
