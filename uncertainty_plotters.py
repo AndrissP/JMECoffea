@@ -601,6 +601,32 @@ def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c,
     plt.show()
     return [p_poly4, xfitmin, xfitmax]
 
+from matplotlib.legend_handler import HandlerLine2D
+
+class HandlerLine2D_numpoints(HandlerLine2D):
+    def __init__(self, marker_pad=0.3, numpoints=1, *args, **kwargs):
+        self._marker_pad = marker_pad
+        self._numpoints = numpoints
+        HandlerLine2D.__init__(self, *args, **kwargs)
+
+    def create_artists(self, legend, orig_handle,
+                       xdescent, ydescent, width, height, fontsize, trans):
+        xdata, xdata_marker = self.get_xdata(legend, xdescent, ydescent,
+                                             width, height, fontsize)
+        ydata = ((height - ydescent) / 2.) * np.ones(xdata.shape, float)
+        legline, = plt.plot(xdata, ydata, color=orig_handle.get_color(),
+                            linestyle=orig_handle.get_linestyle(),
+                            linewidth=orig_handle.get_linewidth())
+
+        legline_marker, = plt.plot(xdata_marker, ydata[:len(xdata_marker)],
+                                   marker=orig_handle.get_marker(),
+                                   color=orig_handle.get_color(),
+                                   linestyle=orig_handle.get_linestyle(),
+                                   linewidth=orig_handle.get_linewidth(),
+                                   markersize=orig_handle.get_markersize())
+
+        return legline, legline_marker
+
 def plot_uncertainty_antiflav(ptvals, etavals, HerPy_differences, additional_uncertainty_curves, uncertainties, ptoretastr, flavors, plotvspt=False):
     addc = additional_uncertainty_curves
     fig, ax = plt.subplots()
@@ -624,9 +650,13 @@ def plot_uncertainty_antiflav(ptvals, etavals, HerPy_differences, additional_unc
     ax.hlines(0, ax.get_xlim()[0], ax.get_xlim()[1],color="gray",
         linewidth=1, alpha=0.4)
 
-    legend1 = ax.legend(handles=antiflav_labs, loc='upper right', bbox_to_anchor=(0.72, 1), handlelength=1.5, title='antiflavor', title_fontsize=10)
-    leg2 = ax.legend(handles=flav_labs, ncol=1, loc='upper left', bbox_to_anchor=(0.67, 1), handlelength=0.9, title='flavor' , title_fontsize=10)#, title='assembled\nfrom QCD', title_fontsize=10)
+    smaller_spacing = plt.rcParams['legend.labelspacing']*0.45
+    larger_spacing = plt.rcParams['legend.labelspacing']*2.0
+    legend1 = ax.legend(handles=antiflav_labs, loc='upper right', bbox_to_anchor=(0.73, 0.978), handlelength=1.5, handleheight=0.7, labelspacing = smaller_spacing)
+    leg2 = ax.legend(handles=flav_labs, ncol=1, loc='upper left', bbox_to_anchor=(0.69, 0.974), handlelength=0.9, handleheight=0.3, labelspacing = larger_spacing)#, title='assembled\nfrom QCD', title_fontsize=10)
     ax.add_artist(legend1)
+#     ax.annotate("flavor", xy=(0.72,0.99), textcoords='axes fraction')
+#     ax.annotate("antiflavor", xy=(0.6,0.99), textcoords='axes fraction')
     xlabel = r'$p_{T}$ (GeV)' if plotvspt else r'$\eta$'
     ax.set_xlabel(xlabel);
     ylabel = 'JEC uncertainty (%)'
@@ -637,15 +667,21 @@ def plot_uncertainty_antiflav(ptvals, etavals, HerPy_differences, additional_unc
         ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
         ax.set_xlim(15,1000)
 
-    # ax.set_ylim(0.9885,1.0205)
+#     ax.set_ylim(0.9885,1.0205)
     ylim_old = ax.get_ylim()
     ylim_pad = (ylim_old[1]-ylim_old[0])*0.4 if plotvspt else (ylim_old[1]-ylim_old[0])*0.62
     ax.set_ylim(ylim_old[0],ylim_old[1]+ylim_pad)
     labtxt = f'{ptoretastr}' #if plotvspt else f'{ptoretastr}'
+    labtxt = labtxt.replace("TTBAR", legend_labels["ttbar"]["lab"])
 #     labtxt = f'$\eta$ = {etabins_abs[ptoretaidx]}' if plotvspt else f'$p_T$ = {ptbins_c[ptoretaidx]} GeV'
     # hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')
     hep.cms.label("Preliminary", loc=0, data=False, ax=ax, rlabel='')
     hep.label.exp_text(text=labtxt, loc=2)
+
+    ax.text(0.72, 0.95,'flavor',transform=ax.transAxes, fontsize=9.5)
+    ax.text(0.48, 0.95,'antiflavor',transform=ax.transAxes, fontsize=9.5)
+#     ax.annotate("flavor", xy=(0.05,0.05), textcoords='axes fraction')
+#     ax.annotate("antiflavor", xy=(0,0), textcoords='axes fraction')
     figdir = "fig/uncertainty"
     if not os.path.exists(figdir):
         os.mkdir(figdir)
@@ -705,6 +741,7 @@ def plot_uncertainty(ptvals, etavals, HerPy_differences, additional_uncertainty_
     ylim_pad = (ylim_old[1]-ylim_old[0])*0.4 if plotvspt else (ylim_old[1]-ylim_old[0])*0.62
     ax.set_ylim(ylim_old[0],ylim_old[1]+ylim_pad)
     labtxt = f'{ptoretastr}' #if plotvspt else f'{ptoretastr}'
+    labtxt = labtxt.replace("TTBAR", legend_labels["ttbar"]["lab"])
 #     labtxt = f'$\eta$ = {etabins_abs[ptoretaidx]}' if plotvspt else f'$p_T$ = {ptbins_c[ptoretaidx]} GeV'
     hep.label.exp_text(text=labtxt, loc=2)
     # hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')

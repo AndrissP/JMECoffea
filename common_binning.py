@@ -33,7 +33,7 @@ class JERC_Constants():
 
     @staticmethod
     def etaBinsEdges_onebin_full():
-        return [-5.191, 5.191]
+        return [-5.191, 0, 5.191]
 
     @staticmethod
     def etaBinsEdges_Aut18():
@@ -102,7 +102,7 @@ class JERC_Constants():
                 "CoarseCalo": JERC_Constants().etaBinsEdges_Aut18(),
                 "JERC" : JERC_Constants().etaBinsEdges_JERC(),
                 "CaloTowers": JERC_Constants().etaBinsEdges_CaloTowers(),
-                "one_bin": JERC_Constants().etaBinsEdges_onebin(),
+                "onebin": JERC_Constants().etaBinsEdges_onebin(),
                 "Uncert": JERC_Constants().etaBinsEdges_Uncert(),
                 "Summer20Flavor": JERC_Constants().etaBinsEdges_Summer20Flavor(),
                 }
@@ -112,7 +112,7 @@ class JERC_Constants():
                 "CoarseCalo": JERC_Constants().etaBinsEdges_Aut18_full(),
                 "JERC" : JERC_Constants().etaBinsEdges_JERC_full(),
                 "CaloTowers": JERC_Constants().etaBinsEdges_CaloTowers_full(),
-                "one_bin": JERC_Constants().etaBinsEdges_onebin_full(),
+                "onebin": JERC_Constants().etaBinsEdges_onebin_full(),
                 "Uncert": JERC_Constants().etaBinsEdges_Uncert_full(),
                 "Summer20Flavor": JERC_Constants().etaBinsEdges_Summer20Flavor_full(),
                 }

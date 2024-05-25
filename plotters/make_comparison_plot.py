@@ -305,7 +305,7 @@ from data_tools import read_or_recreate_data
 out_txt_path = '../out_txt'
 
 def read_data(mean_name, samp, tag1):
-    return read_or_recreate_data(mean_name, samp, tag1, out_txt_path)
+    return np.array(read_or_recreate_data(tag1, out_txt_path)['data'][samp][mean_name])
 
 # def read_data(mean_name, flav, tag1):
 #     return read_data_orig(mean_name, flav, tag1, '../out_txt/')

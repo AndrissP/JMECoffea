@@ -37,7 +37,8 @@ def save_correction_txt_file(txtfile_outname, fit_res_all_tags):
 def save_correction_txt_file_Mikko(txtfile_outname, fit_res_all_tags):
     '''
     Saves the corrections in the txt file with the name `txtfile_outname`.
-    fit_res_all_tags: for each correction tag (e.g., T and J), a dictionary of corrections for each flavor
+    fit_res_all_tags: for each correction tag (e.g., T and J), a dictionary of corrections for each flavor.
+    The functions recommended by Mikko defined in root are converted into a string.
     '''
     with open(txtfile_outname, 'w') as file:
         # str_poly='([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*1/pow(log10(x),[5]))'
@@ -378,7 +379,8 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
                     saveplots=True,
                     colors = None,
                     fit_sample=None,
-                    custom_jet_legend=None ):
+                    custom_jet_legend=None,
+                    combine_antiflavor=True ):
     """ fit the data and plot
     etaidx: index of the eta bin from the data in the `data_dict` to fit
     data_dict: dictionary of the data to fit
@@ -589,12 +591,32 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
             ax.plot(xplot, yvals_init, label=f"Initial values for {fit}", markersize=0);
         
     ###################### Plot formalities ######################
-    ylim_tmp = ax.get_ylim()
-    ylim_pad = (ylim_tmp[1] - ylim_tmp[0])/1.6
-    ax.set_ylim(ylim_tmp[0], ylim_tmp[1]+ylim_pad)
+    ######################## Calculate resonable limits excluding the few points with insane errors ############################
+    validx = (reco_pt>0)*(yval>0)
+    if np.sum(validx) != 0:
+        ### Recalculate the limits for the top ax
+        yerr_norm = np.concatenate([stds])
+        y_norm = np.concatenate([yvals])
+        norm_pos = (yerr_norm/y_norm<0.001) &  (yerr_norm != np.inf) & (y_norm>-0.1)
+        if ~np.any(norm_pos):
+            # print("Cannot determine ylimits")
+            [left_lim, right_lim] = ax.get_ylim()
+        else:
+            left_lim = np.min((y_norm-yerr_norm)[norm_pos])
+            right_lim = np.max((yerr_norm+y_norm)[norm_pos])
+        lim_pad = (right_lim - left_lim)/1.5
+        ax.set_ylim(left_lim-lim_pad/12, right_lim+lim_pad)
+    # ylim_tmp = ax.get_ylim()
+    # ylim_pad = (ylim_tmp[1] - ylim_tmp[0])/1.6
+    # ax.set_ylim(ylim_tmp[0], ylim_tmp[1]+ylim_pad)
 
     ax.set_xlabel(r'$p_{T,reco}$ (GeV)')
-    ylabel = r'correction (1/median)' if inverse else r'median response'
+    if inverse:
+        ylabel = 'median resonse'
+    else:
+        ylable = 'correction (1/median response)' if combine_antiflavor else '1/median response'
+
+    ylabel = r'correction (1/median response)' if inverse else r'median response'
     ax.set_ylabel(ylabel)
     ax.set_xscale('log')
 

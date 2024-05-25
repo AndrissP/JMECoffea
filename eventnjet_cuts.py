@@ -137,7 +137,8 @@ class CutMaker():
         output['sum_weights'] = hist.Hist(cutflow_axis, storage="weight", label="sum of weights")
 
     
-        selectedEvents, reco_jets, cutflow_evts, cutflow_jets = apply_jetNevent_cuts(events, self.cfg, output['cutflow_events'], output['cutflow_jets'], self)
+        # selectedEvents, reco_jets, cutflow_evts, cutflow_jets = apply_jetNevent_cuts(events, self.cfg, output['cutflow_events'], output['cutflow_jets'], self)
+        selectedEvents, reco_jets, cutflow_evts, cutflow_jets = apply_jetNevent_cuts(events, self.cfg, output['cutflow_events'], output['cutflow_jets'], self, dataset)
         output['cutflow_events'] = cutflow_evts
         output['cutflow_jets'] = cutflow_jets
         gen_jets = reco_jets.matched_gen
@@ -210,7 +211,7 @@ events_scale1 = NanoEventsFactory.from_root(
     '/eos/cms/store/user/anpotreb/pi_vs_pibar_all/job_391_scale_1_JME-RunIISummer20UL18NanoAODv9-00002.root', #fileslist[0],
     schemaclass=NanoAODSchema.v6,
     entry_start=0,
-    entry_stop=1000,
+    entry_stop=5000,
 ).events()
 
 
@@ -218,26 +219,37 @@ events = NanoEventsFactory.from_root(
     '/eos/cms/store/user/anpotreb/pi_vs_pibar_all/job_0_scale_0_JME-RunIISummer20UL18NanoAODv9-00002.root', #fileslist[0],
     schemaclass=NanoAODSchema.v6,
     entry_start=0,
-    entry_stop=1000,
+    entry_stop=5000,
 ).events()
 
 events_scale5 = NanoEventsFactory.from_root(
     '/eos/cms/store/user/anpotreb/pi_vs_pibar_all/job_1173_scale_5_JME-RunIISummer20UL18NanoAODv9-00002.root', #fileslist[0],
     schemaclass=NanoAODSchema.v6,
     entry_start=0,
-    entry_stop=1000,
+    entry_stop=5000,
 ).events()
+
+events_scale10 = NanoEventsFactory.from_root(
+    '/eos/cms/store/user/anpotreb/pi_vs_pibar_all/job_1564_scale_10_JME-RunIISummer20UL18NanoAODv9-00002.root', #fileslist[0],
+    schemaclass=NanoAODSchema.v6,
+    entry_start=0,
+    entry_stop=5000,
+).events()
+
 events.metadata['dataset'] = 'not_scaled_pion'
 # breakpoint()
 # events_scale1.metadata['dataset'] = 'not_scaled_pion'
 # events_scale5.metadata['dataset'] = 'not_scaled_pion'
+scale_times = "1"
+evt_dict = {"1": events_scale1, "5": events_scale5, "10": events_scale10}
+events_used = evt_dict[scale_times]
 _, jets = cut_maker.process(events)
-_, jets_scaled1 = cut_maker.process(events_scale1)
-_, jets_scaled5 = cut_maker.process(events_scale5)
+# _, jets_scaled1 = cut_maker.process(events_scale1)
+_, jets_scaled = cut_maker.process(events_used)
 
 print('jetspt = ', jets.pt)
 
-matchedJets = ak.cartesian([jets, jets_scaled5])
+matchedJets = ak.cartesian([jets, jets_scaled])
 deltaR = matchedJets.slot0.delta_r(matchedJets.slot1)
 matchedJets = matchedJets[deltaR < 0.2]
 jets = matchedJets.slot0
@@ -260,22 +272,25 @@ proj = h.project("pt_gen_scaled").values()
 scale = np.array([proj]*len(proj))
 
 from plotters.pltStyle import pltStyle
-import mplhep
+import mplhep as hep
 import matplotlib.pyplot as plt
 pltStyle(style='hep') #, font_frac=1.40
 plt.rcParams['figure.subplot.right'] = plt.rcParams['figure.subplot.right']-0.04
 plt.rcParams['figure.subplot.left'] = plt.rcParams['figure.subplot.left']*0.7
 
 fig, ax = plt.subplots()
-mplhep.hist2dplot(h/scale, ax=ax)
+hep.hist2dplot(h/scale, ax=ax)
 ax.set_xscale('log')
 ax.set_yscale('log')
+figdir = 'fig/response_2d'
+os.makedirs(figdir, exist_ok=True)
 print(f'Saving figure to test.pdf')
-fig.savefig('test.pdf')
+fig.savefig(figdir+'test.pdf')
+plt.rcParams['image.cmap'] = 'coolwarm'
+# plt.rcParams['image.cmap'] = 'seismic'
 
-
-resp_axis = hist.axis.Regular( 100, 0, 2.5, overflow=True, underflow=True, name="ptresponse", label="R")
-resp_axis_scaled = hist.axis.Regular( 100, 0, 2.5, overflow=True, underflow=True, name="ptresponse_scaled", label="$R_{scaled}$")
+resp_axis = hist.axis.Regular( 100, 0, 2.0, overflow=True, underflow=True, name="ptresponse", label="R")
+resp_axis_scaled = hist.axis.Regular( 100, 0, 2.0, overflow=True, underflow=True, name="ptresponse_scaled", label="$R_{scaled}$")
 # resp_axis = hist.axis.Variable(ptresponse_axis, name="response", overflow=True, underflow=True, label=r"$R$")
 # resp_scaled_axis = hist.axis.Variable(ptresponse_axis, name="response_scaled", overflow=True, underflow=True, label=r"$R_{scaled}}$")
 h_resp_2d = Hist(resp_axis, resp_axis_scaled)
@@ -285,14 +300,20 @@ h_resp_2d.fill(ak.flatten(jets.pt/jets.matched_gen.pt), ak.flatten(jets_scaled.p
 
 
 print("corr coef = ", np.corrcoef(ak.flatten(jets.pt/jets.matched_gen.pt), ak.flatten(jets_scaled.pt/jets_scaled.matched_gen.pt)))
-
+breakpoint()
 h = h_resp_2d
 proj = h.project("ptresponse_scaled").values()
 scale = np.array([proj]*len(proj))
 
 fig, ax = plt.subplots()
-mplhep.hist2dplot(h/scale, ax=ax)
+hep.hist2dplot(h/scale, ax=ax)
+hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')
+
+
 # ax.set_xscale('log')
 # ax.set_yscale('log')
-print(f'Saving figure to response_2d.pdf')
-fig.savefig('response_2d.pdf')
+# breakpoint()
+filename = f"{figdir}/response_2d_scale{scale_times}"
+print(f'Saving figure to {filename}.pdf')
+fig.savefig(filename+'.pdf')
+fig.savefig(filename+'.png')

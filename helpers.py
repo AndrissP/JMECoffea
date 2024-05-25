@@ -345,13 +345,29 @@ composite_flavor_dict = {
     # 'g': ['ISR_gluon', 'FSR_gluon'],
     # 'b' : ['b_gluon_splitting', 'b_prompt'],
     # 'bbar' : ['bbar_gluon_splitting', 'bbar_prompt'],
-    'b_gluon_splitting' : ['b_gluon_splitting', 'bbar_gluon_splitting'],
-    'b_prompt' : ['b_prompt', 'bbar_prompt'],
-    'c_gluon_splitting' : ['c_gluon_splitting', 'cbar_gluon_splitting'],
-    'c_prompt' : ['c_prompt', 'cbar_prompt'],
-    'b': ['b_gluon_splitting', 'bbar_gluon_splitting', 'b_prompt', 'bbar_prompt'],
-    'c': ['c_gluon_splitting', 'cbar_gluon_splitting', 'c_prompt', 'cbar_prompt'],
 }
+
+gluon_splitting_dict = {
+    # 'b_gluon_splitting' : ['b_gluon_splitting', 'bbar_gluon_splitting'],
+    # 'b_prompt' : ['b_prompt', 'bbar_prompt'],
+    # 'c_gluon_splitting' : ['c_gluon_splitting', 'cbar_gluon_splitting'],
+    # 'c_prompt' : ['c_prompt', 'cbar_prompt'],
+    'b': ['b_gluon_splitting', 'b_prompt'],
+    'c': ['c_gluon_splitting', 'c_prompt'],
+    'bbar': ['bbar_gluon_splitting', 'bbar_prompt'],
+    'cbar': ['cbar_gluon_splitting', 'cbar_prompt'],
+}
+
+def bar_flavor(flavor):
+    if 'prompt' in flavor:
+        return flavor[:-7]+'bar'+flavor[-7:]
+    elif 'gluon_splitting' in flavor:
+        return flavor[:-16]+'bar'+flavor[-16:]
+    elif flavor in barable_flavors:
+        return flavor+'bar'
+    else:
+        return flavor
+
 
 def get_flavor_antiflavor_list(flavors):
     flavors_new = []
@@ -369,6 +385,10 @@ def add_flavors(output, flavor='all', combine_antiflavour=True ):
     if 'bar' in flavor and combine_antiflavour:
         raise ValueError(f"combine_antiflavour is set to True but the sample {flavor} contains bar. This might lead to inconsistencies.")
     
+    composite_dict = composite_flavor_dict.copy()
+    if 'b_gluon_splitting' in all_samples:
+        for key, value in gluon_splitting_dict.items():
+            composite_dict[key] = value
     
     ############## Find the correct histograms from output to add ################
     if flavor=='all':
@@ -377,11 +397,11 @@ def add_flavors(output, flavor='all', combine_antiflavour=True ):
         combine_samples = [flavor for flavor in all_samples ]
     else:
         try:
-            combine_samples = composite_flavor_dict[flavor]
+            combine_samples = composite_dict[flavor]
         except KeyError:
             combine_samples = [flavor]
         if combine_antiflavour:
-            combine_samples_bar = [flavor+'bar' for flavor in combine_samples if flavor in barable_flavors]
+            combine_samples_bar = [bar_flavor(flavor) for flavor in combine_samples]
             combine_samples = combine_samples_bar + combine_samples
 
     # if flavor == 'g':

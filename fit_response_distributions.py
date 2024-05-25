@@ -351,8 +351,8 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
 if __name__ == "__main__":
     # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
-    data_tags = ['Herwig-TTBAR'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
-    # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+    # data_tags = ['Herwig-TTBAR'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+    data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
 
     # data_tags = ['QCD-Py_noiso'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
     # data_tags = ['QCD-Py', 'Pythia-semilep-TTBAR', 'DY-MG-Py' ] #Pythia-semilep-TTBAR
@@ -362,7 +362,7 @@ if __name__ == "__main__":
         "test_run"            : False,   ### True check on a file that was created with a processor with `test_run=True` (maybe obsolete because this can be specified just in the data_tag)
         "load_fit_res"        : False,   ### True if only replot the fit results without redoing histogram fits (also kind of obsolete because plotting scripts exist in `plotters` )
         "saveplots"           : False,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
-        "combine_antiflavour" : True,    ### True if combine the flavor and anti-flavour jets into one histogram
+        "combine_antiflavour" : False,    ### True if combine the flavor and anti-flavour jets into one histogram
         
         ### Choose eta binning for the response fits.
         ### HCalPart: bin in HCal sectors, CaloTowers: the standard JERC binning,
@@ -387,7 +387,7 @@ if __name__ == "__main__":
 
         ### Define which flavors should be fit
         "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        # "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
         # "flavors": ['b_gluon_splitting', "b_prompt", 'c_gluon_splitting', "c_prompt", 'b', 'c'],
 
         ### None if all the pt bins should be fit, otherwise a list of two numbers for the range of pt bins to fit, or just one number for a single pt bin
