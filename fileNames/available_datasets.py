@@ -14,11 +14,34 @@ and their cross-sections
 
 data_tag: [file_name_path, xsec_path, legend_label]
 '''
+
+dataset_labels = {
+    "Pythia-TTBAR": legend_labels["ttbar"]["lab"]+'Pow+Py8',
+    "Pythia-TTBAR_TTbarSemiLep": legend_labels["ttbar"]["lab"]+', l+jets Pow+Py8',
+    "Pythia-TTBAR_TTbarDilep": legend_labels["ttbar"]["lab"]+r', 2l2$\nu$ Pow+Py8',
+    "Pythia-TTBAR_TTbarFullHad": legend_labels["ttbar"]["lab"]+', all had Pow+Py8',
+    "Herwig-TTBAR": legend_labels["ttbar"]["lab"]+'Pow+Her7',
+    "DY-MG-Py": 'ZJets MG+Py8',
+    "DY-MG-Her": 'ZJets MG+Her7',
+    "QCD-MG-Py": 'QCD MG+Py8',
+    "QCD-MG-Her": 'QCD MG+Her7',
+    "QCD-Py": 'QCD Py8',
+    "DY-FxFx": 'ZJets FxFx',
+    "scaled_pion_kaon": 'pion up/ kaon up',
+    "scaled_pion": 'pion up',
+    "scaled_times2_pion": 'pion up x2',
+    "scaled_times5_pion": 'pion up x5',
+    "scaled_times10_pion": 'pion up x10',
+    "scaled_times100_pion": 'pion up x100',
+    "not_scaled_pion": 'pion central'
+}
+
+# putting labels in the dataset_dictionary was an older way of specifying the labels but it does not work if e.g. Pythia-TTBAR consists of three channels and one needs labels for each
 dataset_dictionary = {
     "Pythia-TTBAR": [None, 'fileNames/TTBAR_Pythia_20UL18/xsecs_TTBAR_Pow-Py8.txt', legend_labels["ttbar"]["lab"]+'Pow+Py8'],
-    "Pythia-semilep-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
-    "Pythia-dilep-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToDilep20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
-    "Pythia-fullhad-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToHad20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
+    "Pythia-semilep-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+', l+jets Pow+Py8'],
+    "Pythia-dilep-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToDilep20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+r', 2l2$\nu$ Pow+Py8'],
+    "Pythia-fullhad-TTBAR": ['fileNames/TTBAR_Pythia_20UL18/TTToHad20UL18_JMENano.txt', 1, legend_labels["ttbar"]["lab"]+', all had Pow+Py8'],
     "Pythia-semilep-TTBAR_0-500": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano_redi_0-500.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
     "Pythia-semilep-TTBAR_501-end": ['fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano_redi_501-end.txt', 1, legend_labels["ttbar"]["lab"]+'Pow+Py8'],
     "Pythia-non-semilep-TTBAR": [None, 'fileNames/TTBAR_Pythia_20UL18/xsecs_TTBAR_Pow-Py8-non-semilep.txt', legend_labels["ttbar"]["lab"]+'Pow+Py8'],

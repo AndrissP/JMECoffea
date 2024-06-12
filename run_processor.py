@@ -85,11 +85,11 @@ def run_processor(
     
 
     tag_Lx = '_L5'                 ### L5 or L23, but L23 not supported since ages.
-    # processor_name = 'CoffeaJERCProcessor'+tag_Lx
-    # from CoffeaJERCProcessor_L5_config import processor_config, processor_dependencies
-    processor_name = 'NHF_NR_processor'
-    processor_config = None
-    processor_dependencies = []
+    processor_name = 'CoffeaJERCProcessor'+tag_Lx
+    from CoffeaJERCProcessor_L5_config import processor_config, processor_dependencies
+    # processor_name = 'NHF_NR_processor'
+    # processor_config = None
+    # processor_dependencies = []
 
 
     ### name of the specific run if parameters changed used for saving figures and output histograms.
@@ -380,7 +380,7 @@ def main():
     data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR', 
     # data_tags = ['Herwig-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     data_tags = ['DY-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['QCD-MG-Py', 'QCD-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    data_tags = ['not_scaled_pion', 'scaled_pion', 'scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['Pythia-fullhad-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['QCD-Py'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
     params =      {"run_comment": 'Testing the alpha cut options in terms of sorting in reco or gen pt', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
@@ -388,12 +388,13 @@ def main():
                   "get_exact_endpoints":False,
                 #   "add_tag":'_200files',
                   "Nfiles": -1,
+                  "xrootdstr":'',
                   
                   } 
     
     Nfiles = -1 
     # dataset = 'fileNames/PFNanoTTToSemiLepPowPy.txt'
-    dataset = 'Hadron_energy_fraction/fileNames/PFNanoQCD_MG_Her.txt'
+    # dataset = 'Hadron_energy_fraction/fileNames/PFNanoQCD_MG_Her.txt'
     # dataset = 'fileNames/PFNanoTTToSemiLepPowHer.txt'
 
     xrootdstr = 'file://'
@@ -402,14 +403,14 @@ def main():
             rootfiles = f.read().split()
             fileslist = [xrootdstr + file for file in rootfiles]
         return fileslist
-    fileslist = txt2filesls(dataset)[:Nfiles]
-    # for data_tag in data_tags:
-        # run_processor(data_tag=data_tag, test_run=False, executor='condor', **params)
-    run_processor(fileslist=fileslist,
-                            executor='dask',
-                            test_run=False,
-                            xrootdstr='file://',
-                            **params)
+    # fileslist = txt2filesls(dataset)[:Nfiles]
+    for data_tag in data_tags:
+        run_processor(data_tag=data_tag, test_run=False, executor='dask', **params)
+    # run_processor(fileslist=fileslist,
+    #                         executor='dask',
+    #                         test_run=False,
+    #                         xrootdstr='file://',
+    #                         **params)
     # run_processor(fileslist=[
     #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/4988713D-E70D-E243-A384-B902119A3604.root',
     #                         '/store/mc/RunIISummer20UL18NanoAODv9/QCD_Pt-15to7000_TuneCP5_Flat2018_13TeV_pythia8/NANOAODSIM/20UL18JMENano_106X_upgrade2018_realistic_v16_L1v1-v1/30000/519DE155-138B-DE46-92CC-6460F9172458.root',

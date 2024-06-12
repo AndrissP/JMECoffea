@@ -25,8 +25,8 @@ def save_correction_txt_file(txtfile_outname, fit_res_all_tags):
             for key in fit_res_all.keys():
                 fit_res = fit_res_all[key]
                 file.write(f'[{key}]\n')
-                file.write('{1 JetEta 1 JetPt ([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(log10(x),4)) Correction L5Flavor}\n')
-                ### copy from the positive eta region into the negative
+                file.write('{1 JetEta 1 JetPt ([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(log10(x),4)+[5]/pow(log10(x),[6])) Correction L5Flavor}\n')
+                ### copy from the positive eta region into the negative00
                 fit_res = np.vstack([np.hstack([np.flip(fit_res[:,0:2]*-1), np.flip(fit_res[:,2:], 0)]), fit_res])
                 for row in fit_res:
                     row[2] = row[2]+2  #+2 because of the pt lower/higher limits that are not accounted into the # parameters before
@@ -42,7 +42,7 @@ def save_correction_txt_file_Mikko(txtfile_outname, fit_res_all_tags):
     '''
     with open(txtfile_outname, 'w') as file:
         # str_poly='([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*1/pow(log10(x),[5]))'
-        str_poly='([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(log10(x),4))'
+        str_poly='([0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(log10(x),4)+[5]/pow(log10(x),[6]))'
         file.write(header_txt+'\n')
         for tag in fit_res_all_tags:
             fit_res_all = fit_res_all_tags[tag]
@@ -82,12 +82,14 @@ from scipy.optimize import brentq
 def find_stationary_pnt_poly(xmin, xmax, *p, degree=4):
     '''Finds the last x within the limits [xmin, xmax], where the derivative of the n-th order polynomial with
     coefficients p, changes sign. n is allowed to be 4 or 3 at the moment. If there is no such point in outputs xmax.  '''
-    if degree not in [3,4]:
+    if degree not in [3,4,5]:
         raise ValueError(f"Degree can be either 3 or 4. The value given is {degree}")
     if degree==3:
         c0, c1, c2, c3 = p
     elif degree==4:
         c0, c1, c2, c3, c4 = p
+    elif degree==5:
+        c0, c1, c2, c3, c4, c5 = p
     xmin_l = np.log10(xmin)
     xmax_l = np.log10(xmax)
     xs = np.linspace(xmin_l, xmax_l, 1000)
@@ -95,6 +97,8 @@ def find_stationary_pnt_poly(xmin, xmax, *p, degree=4):
         deriv = lambda xs: c1+2*c2*xs+c3*3*xs**2
     elif degree==4:
         deriv = lambda xs: c1+2*c2*xs+c3*3*xs**2+4*c4*xs**3
+    elif degree==5:
+        deriv = lambda xs: c1+2*c2*xs+c3*3*xs**2+xs**c4-c5*c4/xs**(c5+1)
     signx = np.sign(deriv(xs))
     changes_sign = signx[1:]*signx[:-1]
     last_change_idx = np.where(changes_sign==-1)[0]
@@ -380,7 +384,8 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
                     colors = None,
                     fit_sample=None,
                     custom_jet_legend=None,
-                    combine_antiflavor=True ):
+                    combine_antiflavour=True,
+                    fig_name=None ):
     """ fit the data and plot
     etaidx: index of the eta bin from the data in the `data_dict` to fit
     data_dict: dictionary of the data to fit
@@ -516,8 +521,11 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     Ndofs = {fit: len(ptbins2fit) - fits2plot[fit][2] for fit in fits2plot}
 
     ## if chi2 of n=3 polynomial outside the 2 one-sided std of the chi2 distribution, use n=3 polynomial.
-    if main_fit == "Poly, n=4" and "Poly, n=3" in fits2plot and chi2.ppf(1-0.158, Ndofs["Poly, n=3"])>chi2s["Poly, n=3"]:
-        main_fit = "Poly, n=3"
+    if main_fit == "Poly, n=4":
+        if ("Poly, n=3" in fits2plot) and (chi2.ppf(1-0.158, Ndofs["Poly, n=3"])>chi2s["Poly, n=3"]):
+            main_fit = "Poly, n=3"
+        elif ("Poly, n=3 + a/x^b" in fits2plot) and chi2.cdf(chi2s["Poly, n=4"], Ndofs["Poly, n=4"]) > chi2.cdf(chi2s["Poly, n=3 + a/x^b"], Ndofs["Poly, n=3 + a/x^b"]):
+            main_fit = "Poly, n=3 + a/x^b"
     
     print(f"Using the {main_fit} fit results ")
     if maxlimit_static_pnt:
@@ -525,6 +533,8 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
             fit_degree = 3 
         elif main_fit=="Poly, n=4":
             fit_degree = 4
+        elif main_fit=="Poly, n=3 + a/x^b":
+            fit_degree = 5
         else:
             raise ValueError(f"Main fit is {main_fit} but the derivative for the static point is not defined for this fit.")
         fit_max_lim_new = find_stationary_pnt_poly(fit_min_lim, fit_max_lim, *fitres[main_fit], degree=fit_degree)
@@ -538,6 +548,9 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
     xplot_max_new = np.searchsorted(xplot, fit_max_lim_new)
 
     main_fit_res = fitres[main_fit]
+    if main_fit=="Poly, n=3 + a/x^b":
+        # leave x**4 coef zero
+        main_fit_res = np.concatenate([main_fit_res[:-2], [0], main_fit_res[-2:]])
     if ncoefs_out<len(main_fit_res):
         raise ValueError(f"ncoefs is smaller than the number of coefficients of the main fit."
                         +f"ncoefs_out={ncoefs_out}, len(main_fit_res)={len(main_fit_res)}."
@@ -576,15 +589,16 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
                     linestyle="none", label=f'Original errorbars',
                     capsize=1.5, capthick=0.7, linewidth=0.9, markersize=0, color='black', **fun_kwargs)
     
+    cols = {fit: next(ax._get_lines.prop_cycler) for fit in fits2plot}
     for fit in fits2plot:
         if np.isnan(chi2s[fit]): 
-            lab = f'{fit} failed'
+            lab = f'{fit}, failed'
         else:
             polytxt3 = ', selected' if fit==main_fit and len(fits2plot)>1 else ''
             lab= fit+r'; $\chi^2/N_{dof} = $'+r' {0:0.3g}/{1:0.0f}'.format(chi2s[fit], Ndofs[fit])+polytxt3
-        ax.plot(xplot, curve_yvals[fit], label=lab, markersize=0);
+        ax.plot(xplot, curve_yvals[fit], label=lab, markersize=0, **cols[fit])
         if maxlimit_static_pnt and fit==main_fit:
-            ax.plot(xplot[:xplot_max_new], curve_yvals[fit][:xplot_max_new], label=f'{fit}; range chosen', markersize=0, linewidth=0.8); #
+            ax.plot(xplot[:xplot_max_new], curve_yvals[fit][:xplot_max_new], label=f'{fit}; range chosen', markersize=0, linewidth=0.8, color='#e6e600'); #
         # if plot_initial_val and fit=="MC truth":
         if fit in plot_initial_val:
             yvals_init = fits2plot[fit][0](xplot, *fits2plot[fit][1])
@@ -597,31 +611,37 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
         ### Recalculate the limits for the top ax
         yerr_norm = np.concatenate([stds])
         y_norm = np.concatenate([yvals])
-        norm_pos = (yerr_norm/y_norm<0.001) &  (yerr_norm != np.inf) & (y_norm>-0.1)
+        min_norm = 0.01 if combine_antiflavour else 0.001
+        norm_pos = (yerr_norm/y_norm<min_norm) &  (yerr_norm != np.inf) & (y_norm>-0.1)
         if ~np.any(norm_pos):
             # print("Cannot determine ylimits")
             [left_lim, right_lim] = ax.get_ylim()
         else:
             left_lim = np.min((y_norm-yerr_norm)[norm_pos])
             right_lim = np.max((yerr_norm+y_norm)[norm_pos])
-        lim_pad = (right_lim - left_lim)/1.5
+        lim_pad = (right_lim - left_lim)/7.8*(1.9+(len(fits2plot)+show_original_errorbars+len(keys)+1))
         ax.set_ylim(left_lim-lim_pad/12, right_lim+lim_pad)
     # ylim_tmp = ax.get_ylim()
     # ylim_pad = (ylim_tmp[1] - ylim_tmp[0])/1.6
     # ax.set_ylim(ylim_tmp[0], ylim_tmp[1]+ylim_pad)
 
     ax.set_xlabel(r'$p_{T,reco}$ (GeV)')
-    if inverse:
-        ylabel = 'median resonse'
-    else:
-        ylable = 'correction (1/median response)' if combine_antiflavor else '1/median response'
+    # if inverse:
+    #     ylabel = 'correction (1/median response)'
+    # else:
+    #     ylabel = 'median resonse' # if combine_antiflavor else '1/median response'
 
     ylabel = r'correction (1/median response)' if inverse else r'median response'
     ax.set_ylabel(ylabel)
     ax.set_xscale('log')
+    xlims = ax.get_xlim()
+    ax.hlines(1,-10, 10000, linestyles='--',color="black",
+              linewidth=0.7,)
+
 
     ax.set_xticks([])
     ax.set_xticks([20, 50, 100, 200, 500, 1000])
+    ax.set_xlim(xlims)
     ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
     # hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
     hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')
@@ -645,20 +665,21 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
               loc="upper left", bbox_to_anchor=(0.01, 0.90)) #, prop={'size': 10}
     
     if saveplots:
-        figdir2 = (figdir+'/'+data_tag.replace(legend_labels["ttbar"]["lab"], 'ttbar').replace(', ', '-')
-                    .replace(" ", "_").replace("+", "_").replace('(', '').replace(')', '').replace('/', '').replace('\n', '')
-                )
-        if not os.path.exists(figdir2):
-            os.mkdir(figdir2)
-            
-        add_name = f'correction_fit_{flav}_'+jeteta_bins.idx2str(etaidx)
-        fig_name = figdir2+'/'+add_name
+        if fig_name is None:
+            figdir2 = (figdir+'/'+'_'.join(data_tags).replace(legend_labels["ttbar"]["lab"], 'ttbar').replace(', ', '-')
+                        .replace(" ", "_").replace("+", "_").replace('(', '').replace(')', '').replace('/', '').replace('\n', '')
+                    )
+            if not os.path.exists(figdir2):
+                os.mkdir(figdir2)
+                
+            add_name = f'correction_fit_{flav}_'+jeteta_bins.idx2str(etaidx)
+            fig_name = figdir2+'/'+add_name
             
         print("Saving plot with the name = ", fig_name+".pdf / .png")
-        plt.savefig(fig_name+'.pdf');
-        plt.savefig(fig_name+'.png');
+        plt.savefig(fig_name+'.pdf')
+        plt.savefig(fig_name+'.png')
 
-    plt.show();
-    plt.close();
+    plt.show()
+    plt.close()
     
     return fit_res_new

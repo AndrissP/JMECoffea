@@ -68,6 +68,11 @@ class FlavorFractions():
         if not isinstance(self.E_frac_splines, dict):
             raise TypeError(f"The argument in E_frac_splines has to be a dictionary over the flavors. The given type is {type(self.E_frac_splines)}")
         self.flavors = np.array([key for key in self.E_frac_splines.keys()])
+        self.ptmins = {}
+        self.ptmaxs = {}
+        for flav in self.flavors:
+            self.ptmins[flav] = np.power(10, [np.min(splineii.x) for splineii in self.E_frac_splines[flav]])
+            self.ptmaxs[flav] = np.power(10, [np.max(splineii.x) for splineii in self.E_frac_splines[flav]])
   
     def evaluate(self, flav, etavals, ptvals):
         ''' Evaluate the flavor fractions for flavor `flav` and at `etavals` and `ptvals`
@@ -108,16 +113,12 @@ class FlavorFractions():
     
     def get_limits_flav(self, etavals, flav):
         ''' Get the pt limits of the splines with flavor `flav` at `etavals`
-        '''
-        
-        splines = self.E_frac_splines[flav]
-        
+        '''        
         etavals = np.abs(etavals)
         etavals = convert_to_np_array(etavals)
         eta_idxs = JetEtaBins(self.binning, absolute=True).get_bin_idx(etavals)
-        spline_eta = splines[eta_idxs]
-        ptmins = np.power(10, [np.min(splineii.x) for splineii in spline_eta])
-        ptmaxs = np.power(10, [np.max(splineii.x) for splineii in spline_eta])
+        ptmins = self.ptmins[flav][eta_idxs]
+        ptmaxs = self.ptmaxs[flav][eta_idxs]
         return ptmins, ptmaxs
     
     def get_x(self):
@@ -131,6 +132,17 @@ def get_spline(yval, pt_bins):
     yval = yval[valid_fit_val]
 
     spline_func = CubicSpline(np.log10(ptbins_c_plot), yval, bc_type='natural', extrapolate=False )
+    return spline_func
+
+from scipy.interpolate import splrep, BSpline
+def get_spline_smooth(yval, yerr, pt_bins, s=10):
+    valid_fit_val = ~(np.isnan(yval) | np.isinf(yval) | (yval==0))
+    ptbins_c_plot = pt_bins.centres[valid_fit_val]
+    yval = yval[valid_fit_val]
+    yerr = np.sqrt(yerr[valid_fit_val])
+
+    spline_func = BSpline(*splrep(np.log10(ptbins_c_plot), yval, w=1/yerr, s=s ), extrapolate=False)
+    spline_func.x = np.log10(ptbins_c_plot)
     return spline_func
 
 def get_ratio(a, b, divide=True):
@@ -159,8 +171,8 @@ def create_data_HerPy_differences(sampHer, sampPy, pt_idxs, eta_idxs,
     sampHer = '_'+sampHer
     sampPy = '_'+sampPy
     if inverse==True:
-        a = read_corrections(sampHer, 'all')
-        b = read_corrections(sampPy, 'all')
+        a = read_corrections(sampHer, 'all', eta_binning_str)
+        b = read_corrections(sampPy, 'all', eta_binning_str)
         delta_a = read_data2('MedianStd', sampHer, 'all', eta_binning_str)
         delta_b = read_data2('MedianStd', sampPy, 'all', eta_binning_str)
         corr_all = get_ratio(a, b, divideHerPy)[pt_idxs,eta_idxs]

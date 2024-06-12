@@ -36,7 +36,7 @@ import os
 import helpers as h
 import plotters.plot_makers as plot_makers
 # from common_binning import JERC_Constants
-from fileNames.available_datasets import dataset_dictionary
+from fileNames.available_datasets import dataset_dictionary, dataset_labels
 from plotters.plot_cutflow import plot_cutflow
 
 def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
@@ -318,22 +318,27 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
         return hists_cutflow
     
     sum_cutflow = normalize_cutflow(sum_cutflow)
+
+    dataset_label = dataset_labels[tag_cutflow] if tag_cutflow in dataset_labels else tag_cutflow 
+    print("dataset label: ", dataset_label)
     # sum_cutflow['cutflow_events'].variances()[:] = sum_cutflow['cutflow_events'].values()
     # sum_cutflow['cutflow_jets'].variances()[:] = sum_cutflow['cutflow_jets'].values()
     jets_pet_ev = sum_cutflow['cutflow_jets']/sum_cutflow['cutflow_events']['all_events'].value
-    plot_cutflow(sum_cutflow['cutflow_events'], tag_cutflow, ylab='N events', fig_name='cutflow_Nevents', figdir=fig_path+'/cutflow/'+tag_cutflow)
-    plot_cutflow(sum_cutflow['cutflow_jets'], tag_cutflow, ylab='N jets', fig_name='cutflow_Njets', figdir=fig_path+'/cutflow/'+tag_cutflow)
-    plot_cutflow(jets_pet_ev, tag_cutflow, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', figdir=fig_path+'/cutflow/'+tag_cutflow)
+    plot_cutflow(sum_cutflow['cutflow_events'], tag_cutflow, ylab='N events', fig_name='cutflow_Nevents', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
+    plot_cutflow(sum_cutflow['cutflow_jets'], tag_cutflow, ylab='N jets', fig_name='cutflow_Njets', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
+    plot_cutflow(jets_pet_ev, tag_cutflow, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
     # if 'cutflow_events' in hists_cutflow:
         # drawing only for the first sample as in the hist_merged, the total number of events are normalized
     if len(list(keys))>1:
         for key in keys:
             cutflow = normalize_cutflow(output[key])
+            dataset_label = dataset_labels[key] if key in dataset_labels else key
+            dataset_label.replace('_', ' ')
 
             jets_pet_ev = cutflow['cutflow_jets']/cutflow['cutflow_events']['all_events'].value
-            plot_cutflow(cutflow['cutflow_events'], key, ylab='N events', fig_name='cutflow_Nevents', figdir=fig_path+'/cutflow/'+tag_cutflow)
-            plot_cutflow(cutflow['cutflow_jets'], key, ylab='N jets', fig_name='cutflow_Njets', figdir=fig_path+'/cutflow/'+tag_cutflow)
-            plot_cutflow(jets_pet_ev, key, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', figdir=fig_path+'/cutflow/'+tag_cutflow)
+            plot_cutflow(cutflow['cutflow_events'], key, ylab='N events', fig_name='cutflow_Nevents', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
+            plot_cutflow(cutflow['cutflow_jets'], key, ylab='N jets', fig_name='cutflow_Njets', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
+            plot_cutflow(jets_pet_ev, key, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
 
     # else:
     #     print("cutflow histograms cannot be drawn because the cutflow isn't split into events and jets. Potentially not all events are selected")
@@ -349,26 +354,26 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     print("All done. Congrats!")
   
 if __name__ == "__main__":
-    # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
+    data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
     # data_tags = ['Herwig-TTBAR'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
-    data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+    # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
 
     # data_tags = ['QCD-Py_noiso'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
-    # data_tags = ['QCD-Py', 'Pythia-semilep-TTBAR', 'DY-MG-Py' ] #Pythia-semilep-TTBAR
+    # data_tags = ['QCD-Py' ] #Pythia-semilep-TTBAR
 
     config = {
          ################ Parameters of the run and switches  #########################
         "test_run"            : False,   ### True check on a file that was created with a processor with `test_run=True` (maybe obsolete because this can be specified just in the data_tag)
-        "load_fit_res"        : False,   ### True if only replot the fit results without redoing histogram fits (also kind of obsolete because plotting scripts exist in `plotters` )
+        "load_fit_res"        : False,   ###  (also kind of obsolete because plotting scripts exist in `plotters` ) True if only replot the fit results without redoing histogram fits
         "saveplots"           : False,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
-        "combine_antiflavour" : False,    ### True if combine the flavor and anti-flavour jets into one histogram
+        "combine_antiflavour" : True,    ### True if combine the flavor and anti-flavour jets into one histogram
         
         ### Choose eta binning for the response fits.
         ### HCalPart: bin in HCal sectors, CaloTowers: the standard JERC binning,
         ### CoarseCalo: like 'CaloTowers' but many bins united; onebin: combine all eta bins
         ### Preprocessing always done in CaloTowers. For the reponse distributions, the bins can be merged.
-        "eta_binning"         : "HCalPart",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
+        "eta_binning"         : "Summer20Flavor",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
         "pt_binning"          : "MC_truth", ### MC_truth, Uncert, Coarse, onebin
         "sum_neg_pos_eta_bool": True,  ### if combining the positive and negative eta bins
         "tag_Lx" : '_L5',                 ### L5 or L23, but L23 not supported since ages.
@@ -386,13 +391,13 @@ if __name__ == "__main__":
 
 
         ### Define which flavors should be fit
-        "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        # "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        # "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
         # "flavors": ['b_gluon_splitting', "b_prompt", 'c_gluon_splitting', "c_prompt", 'b', 'c'],
 
         ### None if all the pt bins should be fit, otherwise a list of two numbers for the range of pt bins to fit, or just one number for a single pt bin
-        "pt_to_fit": None,
-        # pt_to_fit: list = [30]
+        # "pt_to_fit": None,
+        # "pt_to_fit": [30],
         # "eta_to_fit": [0],
     }
 

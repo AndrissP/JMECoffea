@@ -3,7 +3,9 @@ import os
 import mplhep as hep
 from plotters.pltStyle import pltStyle
 pltStyle(style='hep')
+from fileNames.available_datasets import dataset_dictionary
 
+hep_label="Private work"
 
 def remove_xminor_ticks():
     plt.tick_params(
@@ -33,7 +35,12 @@ def plot_cutflow(cutflow, tag_full, ylab, fig_name, title_name=None, alt_tick_la
         xticklab = ax.get_xticklabels()
         for lab, lab_txt in zip(xticklab, alt_tick_labs):
             lab.set_text(lab_txt)
-    hep.label.exp_text(text=title_name, loc=0)
+    hep.cms.label(hep_label, loc=0, data=False, ax=ax, rlabel='')
+    hep.label.exp_text(text=title_name, loc=2)
+
+    (ylim0, ylim1) = ax.get_ylim()
+    yh = (ylim1-ylim0)
+    ax.set_ylim(ylim0, ylim1+yh*0.2 )
     if not os.path.exists(figdir):
         os.mkdir(figdir)
         print("Created directory: ", figdir)

@@ -10,12 +10,24 @@ from fileNames.available_datasets import legend_labels
 from common_binning import JERC_Constants
 from JetEtaBins import JetEtaBins, PtBins
 
+def find_eta_str(plotvspt, binval, correction_fnc, name):
+    eta_str = ''
+    if plotvspt:
+        corr_etabins = correction_fnc._bins['JetEta'] 
+        corr_bin_idx = np.searchsorted(corr_etabins, binval, side='right')-1
+#         assert False
+        if corr_bin_idx==len(corr_etabins):
+            corr_bin_idx-=1
+        if 'Run 1' in name:
+            eta_str = ', \n'+r' {:0.1f}$<|\eta|<${:0.1f}'.format(corr_etabins[corr_bin_idx], corr_etabins[corr_bin_idx+1])
+    return eta_str
+
 def make_comparison_plot(data_dict,
                               function_dict,
                               etabins=JetEtaBins("HCalPart", absolute=True), #np.array(JERC_Constants.etaBinsEdges_CaloTowers_full()),
                               ptbins=PtBins("MC_truth"), #np.array(JERC_Constants.ptBinsEdgesMCTruth()),
                               binidx=0, flav='b',
-                              pt_min = 20,
+                              pt_min = 17,
                               ratio_name='ratio',
                               inverse=True, plotvspt=True, ratio_ylim=None,
                               reset_colors = True,
@@ -128,15 +140,16 @@ def make_comparison_plot(data_dict,
         yvals_cont[name] = correction_fnc(*vals_cont)/closure(*vals_cont)
         yvals_spline[name] = correction_fnc(*vals_spline)/closure(*vals_spline)
         
-        eta_str = ''
-        if plotvspt:
-            corr_etabins = correction_fnc._bins['JetEta'] 
-            corr_bin_idx = np.searchsorted(corr_etabins, binval, side='right')-1
-    #         assert False
-            if corr_bin_idx==len(corr_etabins):
-                corr_bin_idx-=1
-            if 'Winter' in name:
-                eta_str = ', \n'+r' {:0.1f}$<|\eta|<${:0.1f}'.format(corr_etabins[corr_bin_idx], corr_etabins[corr_bin_idx+1])
+        eta_str = find_eta_str(plotvspt, binval, correction_fnc, name)
+    #     eta_str = ''
+    #     if plotvspt:
+    #         corr_etabins = correction_fnc._bins['JetEta'] 
+    #         corr_bin_idx = np.searchsorted(corr_etabins, binval, side='right')-1
+    # #         assert False
+    #         if corr_bin_idx==len(corr_etabins):
+    #             corr_bin_idx-=1
+    #         if 'Run 1' in name:
+    #             eta_str = ', \n'+r' {:0.1f}$<|\eta|<${:0.1f}'.format(corr_etabins[corr_bin_idx], corr_etabins[corr_bin_idx+1])
             
         ax.plot(xv_cont, yvals_cont[name], label=name+eta_str, markersize=0) # +', '+eta_str, markersize=0)
 
@@ -213,24 +226,25 @@ def make_comparison_plot(data_dict,
         norm_pos = (yerr_norm<0.04) &  (yerr_norm != np.inf) & (y_norm>-0.1)
         left_lim = np.min((y_norm-yerr_norm)[norm_pos])
         right_lim = np.max((yerr_norm+y_norm)[norm_pos])
-        lim_pad = (right_lim - left_lim)/2.5
+        lim_pad = (right_lim - left_lim)/1.5
         ax.set_ylim(left_lim-lim_pad/10, right_lim+lim_pad)
 
-        ### Recalculate the limits for the ratio plot
-        yerr_norm = np.concatenate(data_model_ratio_unc)
-        y_norm = np.concatenate(data_model_ratio)
-        norm_pos = (yerr_norm<0.4) &  (yerr_norm != np.inf) & (y_norm>-0.1)
-        if ~np.any(norm_pos):
-            print("Cannot determine ylimits")
-        else:
-            # raise Exception("Cannot determine ylimits")
-            left_lim = np.min((y_norm-yerr_norm)[norm_pos])
-            right_lim = np.max((yerr_norm+y_norm)[norm_pos])
-            lim_pad = (right_lim - left_lim)/5
-            ax2.set_ylim(left_lim-lim_pad, right_lim+lim_pad)
-
-    if not ratio_ylim==None:
-        ax2.set_ylim(ratio_ylim)
+        if not ratio_ylim==None:
+            ax2.set_ylim(ratio_ylim)
+        # else:
+        #     ### Recalculate the limits for the ratio plot
+        #     yerr_norm = np.concatenate(data_model_ratio_unc)
+        #     y_norm = np.concatenate(data_model_ratio)
+        #     norm_pos = (yerr_norm<0.4) &  (yerr_norm != np.inf) & (y_norm>-0.1)
+        #     if ~np.any(norm_pos):
+        #         print("Cannot determine ylimits")
+        #     else:
+        #         # raise Exception("Cannot determine ylimits")
+        #         left_lim = np.min((y_norm-yerr_norm)[norm_pos])
+        #         right_lim = np.max((yerr_norm+y_norm)[norm_pos])
+        #         lim_pad = (right_lim - left_lim)/20
+        #         ax2.set_ylim(left_lim-lim_pad, right_lim+lim_pad)
+        #         breakpoint()
 
     if plotvspt:
         xlabel = r'$p_{T,reco}$ (GeV)' if use_recopt else r'$p_{T,ptcl}$ (GeV)'
@@ -270,6 +284,7 @@ def make_comparison_plot(data_dict,
     ax2.set_yticks(ax2.get_yticks()[:-1])
     ax2.set_yticklabels(tick_labels)
 
+    # breakpoint()
     ############################ Adding the CMS labels and saving the plots ######################################
     eta_string = bins.idx2str(binidx) #'_eta'+str(etabins_abs[etaidx])+'to'+str(etabins_abs[etaidx+1])
 #     eta_string = eta_string.replace('.','')
@@ -297,7 +312,6 @@ def make_comparison_plot(data_dict,
     plt.savefig(fig_name+'.pdf')
     plt.savefig(fig_name+'.png')
     plt.show()
-
 
 # from helpers import read_data as read_data_orig
 

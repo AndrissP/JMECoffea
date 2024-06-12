@@ -9,6 +9,7 @@ import os
 #     sys.path.append(top_path)
 from common_binning import JERC_Constants
 from helpers import legend_str_to_filename
+hep_label="Private work"
 
 def plot_corrections(result, ptbins_c, etabins, tag, flavor, plotetavals=[0, 1.305, 2.5, 3.139], plotmean=True, minpt=20):
     ''' plotmean: if True plot not only median but also mean
@@ -23,7 +24,7 @@ def plot_corrections(result, ptbins_c, etabins, tag, flavor, plotetavals=[0, 1.3
         mean_p[mean_p==0] = np.nan
 
     fig, ax = plt.subplots() 
-    start = np.searchsorted(ptbins_c, 20, side='left') #np.where(ptbins<=20)[0][-1]
+    start = np.searchsorted(ptbins_c, minpt, side='left') #np.where(ptbins<=20)[0][-1]
     
     etaidxs = etabins.get_bin_idx(plotetavals)
 #     lastbin = lastbin[-1] if len(lastbin)>0 else -1
@@ -217,9 +218,8 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
     if print_txt:
         hep_txt+=txt2print
     ax2.legend()
-    
     # hep.label.exp_text(text=hep_txt, loc=0)
-    hep.cms.label("Private work", loc=0, data=False, ax=ax2, rlabel='')
+    hep.cms.label(hep_label, loc=0, data=False, ax=ax2, rlabel='')
     hep.label.exp_text(text=hep_txt, loc=2)
     plt.savefig(figName+'.png', dpi=plt.rcParamsDefault['figure.dpi']);
     plt.savefig(figName+'.pdf', dpi=plt.rcParamsDefault['figure.dpi']);

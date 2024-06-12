@@ -114,6 +114,10 @@ def check_hist_values(hist1, hist2):
     # if not (hist1.keys()==hist2.keys()):
         raise ValueError(f"Keys of the two histograms are not the same. The keys are {hist1.keys()} and {hist2.keys()}")
 
+def hist_sub(hist1, hist2):
+    check_hist_values(hist1, hist2)
+    return {key:(hist1[key]-hist2[key]) for key in hist1.keys()}
+
 def hist_add(hist1, hist2):
     check_hist_values(hist1, hist2)
     return {key:(hist1[key]+hist2[key]) for key in hist1.keys()}
@@ -356,6 +360,7 @@ gluon_splitting_dict = {
     'c': ['c_gluon_splitting', 'c_prompt'],
     'bbar': ['bbar_gluon_splitting', 'bbar_prompt'],
     'cbar': ['cbar_gluon_splitting', 'cbar_prompt'],
+    'cs': ['c_gluon_splitting', 'c_prompt', 's'],
 }
 
 def bar_flavor(flavor):

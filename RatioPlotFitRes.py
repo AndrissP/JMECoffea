@@ -30,7 +30,7 @@ class RatioPlotFitRes():
 #     xmaxs: dict = field(init=False, repr=True)
     flavors: str = np.array([]) # field(init=False, repr=True)
     ptmin_global: float = 30
-    ptmax_global: float = 500
+    ptmax_global: float = 2000
     _jetetabins: JetEtaBins = field(init=False, repr=False)
         
     def __post_init__(self):
@@ -79,12 +79,13 @@ class RatioPlotFitRes():
             )
         return spline_sum.T
 
-    def resum_ratio_to_mix(self, etavals, ptvals, Efracspline_Her, Efracspline_Py=None, divideHerPy=False, etavals_frac=None, ptvals_frac=None):
+    def resum_ratio_to_mix(self, etavals, ptvals, Efracspline_Her, Efracspline_Py=None, divideHerPy=False, etavals_frac=None, ptvals_frac=None, single_flav=False):
         ''' Compute Eq. (26) in Sec. 7 of arXiv:1607.03663 at etavals and ptvals.
         Use flavor fractions splines given in Efracspline, Efracspline2.
         `divideHerPy` == True: calculate the Herwig/Pythia ratio; False: calculate the Herwig/Pythia difference
         `start_from_ratios` == True: resum the Herwig/Pythia ratios to the average of the flavor content;
                             False: do as in Eq. (26)
+        `single_flav` here does not do anything, it is just to keep the function signature the same as in the CorrectionEvaluator class
         '''
         ptvals, etavals = convert_to_np_array(ptvals), convert_to_np_array(etavals)
         pt_min, pt_max = Efracspline_Her.get_limits(etavals)
@@ -117,14 +118,14 @@ class CorrectionEvaluator:
     use_corrections: str = 'J'
     evaluator: evaluator = field(init=False, repr=False)
     ptmin_global: float = 30
-    ptmax_global: float = 500
+    ptmax_global: float = 2000
     _jetetabins: JetEtaBins = field(init=False, repr=False)
 
     def __post_init__(self):
         binning = self.binning
         if not binning in JERC_Constants.StrToBinsDict().keys():
             raise TypeError(f"The provided eta binning, {binning} not defined in the `common_binning` file. The available binnings are {JERC_Constants.StrToBinsDict().keys()}")
-        self.eta_binning_str = '_'+binning if binning != "HCalPart" else ''
+        self.eta_binning_str = '_'+binning if binning != "Summer20Flavor" else ''
 
         corr_loc_Sum20_Py = [f"* * {self.correction_txt_dir+self.correction_txt+self.eta_binning_str+'.txt'}"]
         corr_loc_Sum20_Her = [f"* * {self.correction_txt_dir+self.correction_txt+'_Her'+self.eta_binning_str+'.txt'}"]
@@ -187,33 +188,47 @@ class CorrectionEvaluator:
         ptmaxs = np.min(np.vstack([ptmaxs, lims[:,1,:]]),axis=0)
         return ptmins, ptmaxs
 
-    def resum_ratio_to_mix(self, etavals, ptvals, Efracspline_Her, Efracspline_Py=None, divideHerPy=False, etavals_frac=None, ptvals_frac=None):
+    def resum_ratio_to_mix(self, etavals, ptvals, Efracspline_Her, Efracspline_Py=None, divideHerPy=False, etavals_frac=None, ptvals_frac=None, single_flav=None):
         ''' Compute Eq. (26) in Sec. 7 of arXiv:1607.03663 at etavals and ptvals.
         Use flavor fractions splines given in Efracspline, Efracspline2.
         `divideHerPy` == True: calculate the Herwig/Pythia ratio; False: calculate the Herwig/Pythia difference
         `start_from_ratios` == True: resum the Herwig/Pythia ratios to the average of the flavor content;
                             False: do as in Eq. (26)
         '''
+        # breakpoint()
         ptvals, etavals = convert_to_np_array(ptvals), convert_to_np_array(etavals)
-        pt_min, pt_max = Efracspline_Her.get_limits(etavals)
-        if not Efracspline_Her==None:
-            pt_min2, pt_max2 = Efracspline_Py.get_limits(etavals)
+        if single_flav is None:
+            pt_min, pt_max = Efracspline_Her.get_limits(etavals)
+            if not Efracspline_Her==None:
+                pt_min2, pt_max2 = Efracspline_Py.get_limits(etavals)
+            else:
+                pt_min2, pt_max2 = pt_min, pt_max
+
+            pt_min3, pt_max3 = self.get_limits_all_flav(etavals)
+            pt_min_tot = np.max([pt_min, pt_min2, pt_min3, [self.ptmin_global]*len(pt_min)],axis=0)
+            pt_max_tot = np.min([pt_max, pt_max2, pt_max3, [self.ptmax_global]*len(pt_min)],axis=0)
+            ptvals = np.clip(ptvals, pt_min_tot, pt_max_tot)
+            if etavals_frac==None or ptvals_frac==None:
+                etavals_frac = etavals
+                ptvals_frac = ptvals
+
+            return get_ratio(self.resum_to_mix(etavals, ptvals, Efracspline_Her, etavals_frac, ptvals_frac, 'Her'),
+                            self.resum_to_mix(etavals, ptvals, Efracspline_Py, etavals_frac, ptvals_frac, 'Py'),
+                            divideHerPy)
         else:
-            pt_min2, pt_max2 = pt_min, pt_max
+            pt_min, pt_max = self.get_limits(sample='Her', flavor=single_flav, etavals=etavals)
+            pt_min2, pt_max2 = self.get_limits(sample='Py', flavor=single_flav, etavals=etavals)
+            pt_min_tot = np.max([pt_min, pt_min2, [self.ptmin_global]*len(pt_min)],axis=0)
+            pt_max_tot = np.min([pt_max, pt_max2, [self.ptmax_global]*len(pt_min)],axis=0)
+            ptvals = np.clip(ptvals, pt_min_tot, pt_max_tot)
+            # breakpoint()
+            return get_ratio(self.evaluate(etavals, ptvals, 'Her', single_flav),
+                             self.evaluate(etavals, ptvals, 'Py', single_flav),
+                             divideHerPy)
+            
+            
 
-        pt_min3, pt_max3 = self.get_limits_all_flav(etavals)
-        pt_min_tot = np.max([pt_min, pt_min2, pt_min3, [self.ptmin_global]*len(pt_min)],axis=0)
-        pt_max_tot = np.min([pt_max, pt_max2, pt_max3, [self.ptmax_global]*len(pt_min)],axis=0)
-        ptvals = np.clip(ptvals, pt_min_tot, pt_max_tot)
-        if etavals_frac==None or ptvals_frac==None:
-            etavals_frac = etavals
-            ptvals_frac = ptvals
-
-        return get_ratio(self.resum_to_mix(etavals, ptvals, Efracspline_Her, etavals_frac, ptvals_frac, 'Her'),
-                         self.resum_to_mix(etavals, ptvals, Efracspline_Py, etavals_frac, ptvals_frac, 'Py'),
-                         divideHerPy)
-
-def get_additional_uncertainty_curves(etavals, ptvals, etavals0, dijetat_eta0, evaluator, qfrac_spline_dict, divideHerPy=False):
+def get_uncertainty(etavals, ptvals, etavals0, dijetat_eta0, evaluator, qfrac_spline_dict, divideHerPy=False):
     '''Obtain all the other curves necessary for the plots'''
     result = {}
     result["g20q80"] = evaluator.resum_ratio_to_mix(etavals, ptvals,
@@ -247,6 +262,7 @@ def get_additional_uncertainty_curves(etavals, ptvals, etavals0, dijetat_eta0, e
                               fractions100,
                               fractions100,
                               divideHerPy,
+                              single_flav=flav
                              )
         
     
