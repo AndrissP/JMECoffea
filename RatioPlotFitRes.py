@@ -228,7 +228,7 @@ class CorrectionEvaluator:
             
             
 
-def get_uncertainty(etavals, ptvals, etavals0, dijetat_eta0, evaluator, qfrac_spline_dict, divideHerPy=False):
+def get_uncertainty(etavals, ptvals, etavals0, dijetat_eta, evaluator, qfrac_spline_dict, divideHerPy=False):
     '''Obtain all the other curves necessary for the plots'''
     result = {}
     result["g20q80"] = evaluator.resum_ratio_to_mix(etavals, ptvals,
@@ -272,6 +272,7 @@ def get_uncertainty(etavals, ptvals, etavals0, dijetat_eta0, evaluator, qfrac_sp
                                   divideHerPy,
                                   )
     
-    result["Rref"] = result["g20q80_fixed"] + (dijetat_eta0 - Rdijet0) #HerPy_differences['QCD'][0]
+    result["Rdijet0"] = Rdijet0
+    result["Rref"] = result["g20q80_fixed"] + (dijetat_eta - Rdijet0) #HerPy_differences['QCD'][0]
     
     return result

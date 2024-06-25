@@ -33,7 +33,13 @@ pltStyle(style='hep', font_frac=1.05)
 
 # from uncertainty_plotters import color_scheme
 color_scheme = {key: cycler_vals
-    for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'd', 'u', 's', 'q', 'cs'])}
+    for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 's', 'q', 'cs', 'u', 'd'])}
+# color_scheme_antiflav = {key: cycler_vals
+#     for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'udbar', 'cbar', 'bbar', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 'sbar', 'qbar'])}
+# color_scheme = color_scheme | color_scheme_antiflav
+
+# color_scheme = {key: cycler_vals
+#     for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'd', 'u', 's', 'q', 'cs'])}
 
 #### some newer versions of pyplot and mplhep, aren't good friends with jupyter
 #### To make the plots be formatted directly well, we need to make a dummy plot and rerun the import

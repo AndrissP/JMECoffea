@@ -962,7 +962,7 @@ def plot_uncertainty_antiflav(ptvals, etavals, additional_uncertainty_curves, un
     plt.savefig(fig_name+'.png');
     plt.show()
 
-def plot_uncertainty(ptvals, etavals, HerPy_differences, additional_uncertainty_curves, uncertainties, ptoretastr, flavors, plotvspt=False, plot_qcd_DY=True):
+def plot_uncertainty(ptvals, etavals, HerPy_differences, additional_uncertainty_curves, uncertainties, ptoretastr, pltstr, flavors, plotvspt=False, plot_qcd_DY=True):
     addc = additional_uncertainty_curves
     fig, ax = plt.subplots()
 
@@ -1002,7 +1002,7 @@ def plot_uncertainty(ptvals, etavals, HerPy_differences, additional_uncertainty_
         ax.set_xscale('log')
         ax.set_xticks([10, 20, 50, 100, 500, 1000, 5000])
         ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
-        ax.set_xlim(15,2000)
+        ax.set_xlim(15,1000)
     else:        
         for HCal_border in JERC_Constants.etaBinsEdges_Win14():
             ax.vlines(HCal_border, ylim_old[0]*3, ylim_old[1]*3, linestyles='--',color="gray",
@@ -1020,6 +1020,10 @@ def plot_uncertainty(ptvals, etavals, HerPy_differences, additional_uncertainty_
     figdir = "fig/uncertainty"
     if not os.path.exists(figdir):
         os.mkdir(figdir)
+    pltstr = pltstr.replace(', ', '_').replace(' ', '_').replace('$', '').replace('=', '_').replace('\eta', 'eta').replace('|', '').replace('<', '').replace('\n', '_')
+    figdir = "fig/uncertainty"+"/uncertainty"+pltstr
+    if not os.path.exists(figdir):
+        os.mkdir(figdir)
 
     if plotvspt:
         fig_name = figdir+f"/JECuncertainty_vs_pt_eta_{ptoretastr}".replace('.','')
@@ -1034,7 +1038,7 @@ def plot_uncertainty(ptvals, etavals, HerPy_differences, additional_uncertainty_
     plt.savefig(fig_name+'.png');
     plt.show()
 
-def plot_HerPydiff(ptvals, HerPy_differences, additional_uncertainty_curves, divideHerPy, etaidx, jeteta_bins, pt_bins, ptoretastr, flavors, combine_antiflavour):
+def plot_HerPydiff(ptvals, HerPy_differences, additional_uncertainty_curves, divideHerPy, etaidx, jeteta_bins, pt_bins, pltstr, flavors, combine_antiflavour):
     addc = additional_uncertainty_curves
     fig, ax = plt.subplots()
 
@@ -1083,22 +1087,123 @@ def plot_HerPydiff(ptvals, HerPy_differences, additional_uncertainty_curves, div
     ylim_old = ax.get_ylim()
     ylim_pad = (ylim_old[1]-ylim_old[0])*0.3
     ax.set_ylim(ylim_old[0],ylim_old[1]+ylim_pad)
-    labtxt = jeteta_bins.idx2plot_str(etaidx)+ptoretastr.replace("TTBAR", legend_labels["ttbar"]["lab"])
+    labtxt = jeteta_bins.idx2plot_str(etaidx)+pltstr.replace("TTBAR", legend_labels["ttbar"]["lab"])
     hep.label.exp_text(text=labtxt, loc=2)
     hep.cms.label(hep_label, loc=0, data=False, ax=ax, rlabel='')
 
     figdir = "fig/uncertainty"
     if not os.path.exists(figdir):
         os.mkdir(figdir)
-    ptoretastr = ptoretastr.replace(', ', '_').replace(' ', '_').replace('$', '').replace('=', '_').replace('\eta', 'eta').replace('|', '').replace('<', '').replace('\n', '_')
+    pltstr = pltstr.replace(', ', '_').replace(' ', '_').replace('$', '').replace('=', '_').replace('\eta', 'eta').replace('|', '').replace('<', '').replace('\n', '_')
+    figdir = "fig/uncertainty"+"/uncertainty"+pltstr
+    if not os.path.exists(figdir):
+        os.mkdir(figdir)
+        
     add_name = '/Herwig_Pythia_ratio' if divideHerPy else '/Herwig_Pythia_difference'
     if not os.path.exists(figdir+add_name+'/'):
         os.mkdir(figdir+add_name+'/')
-    fig_name = figdir+add_name+'/'+add_name+ptoretastr+'_'+jeteta_bins.idx2str(etaidx)
+    fig_name = figdir+add_name+'/'+add_name+pltstr+'_'+jeteta_bins.idx2str(etaidx)
     print("Saving plot with the name = ", fig_name+".pdf / .png")
     plt.savefig(fig_name+'.pdf');
     plt.savefig(fig_name+'.png');
     plt.show()
+
+# from uncertainty_plotters import color_scheme
+# from fileNames.available_datasets import legend_labels
+# hep_label = "Private work"
+def convert_xpos(x, lims):
+    ax, bx = lims
+    return (np.log(x) - np.log(ax))/(np.log(bx) - np.log(ax))
+
+def convert_ypos(y, lims):
+    ay, by = lims
+    return (y - ay)/(by - ay)
+
+def plot_Rref(ptvals, Rdijet0, Rdijet, DY200, Rtot, Rtot_smooth, jeteta_bins, etaidx, pltstr, g_unc):
+    fix, ax = plt.subplots()
+    
+    ax.plot(ptvals, Rdijet0, markersize=0, label=f"dijet, ${jeteta_bins.idx2plot_str(0)[5:]}",color=color_scheme["QCD"]['color'], linewidth=1)
+    ax.plot(ptvals, Rdijet, markersize=0, label=f"dijet, {jeteta_bins.idx2plot_str(etaidx)}",color=color_scheme["QCD"]['color'], linestyle='--')
+    ax.hlines(0, 1, 10000, linestyles='--', color='black',
+        linewidth=0.8, alpha=0.9)
+    ax.plot(ptvals, Rtot, markersize=0, label="$R_{ref}$")
+    ax.plot(ptvals, Rtot_smooth, markersize=0, label="$R_{ref}$ smoothed")
+    ax.plot(ptvals, g_unc, markersize=0, label="$R_{g, Her} - R_{g, Py}$", color=color_scheme["g"]['color'])
+    ax.plot(ptvals, g_unc-Rtot_smooth, markersize=0, label="g uncertainty", color=color_scheme["g"]['color'], linestyle='--')
+    ax.hlines(DY200, 1, 10000, linestyles='--',color=color_scheme["DY200"]['color'],
+        linewidth=1, alpha=0.9, label='DY at 200 GeV')
+    
+    ax.set_xscale('log')
+    ax.set_xticks([10, 20, 50, 100, 500, 1000, 5000])
+    ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
+    ax.set_xlim(15,1000)
+    ax.legend(handlelength=1.3)
+    ax.set_xlabel(r'$p_{T}$ (GeV)')
+    ax.set_ylabel('R(Her7) - R(Py8)')
+    hep.cms.label(hep_label, loc=0, data=False, ax=ax, rlabel='')
+    hep.label.exp_text(text=pltstr.replace("TTBAR", legend_labels["ttbar"]["lab"]), loc=2)
+    pltstr = pltstr.replace(', ', '_').replace(' ', '_').replace('$', '').replace('=', '_').replace('\eta', 'eta').replace('|', '').replace('<', '').replace('\n', '_')
+    figdir = f"fig/uncertainty/uncertainty_{pltstr}"
+    if not os.path.exists(figdir):
+        os.mkdir(figdir)
+    figdir = figdir+"/Rref"
+    if not os.path.exists(figdir):
+        os.mkdir(figdir)
+
+    ylim_old = ax.get_ylim()
+    ylim_pad = (ylim_old[1]-ylim_old[0])*0.2
+    ax.set_ylim(ylim_old[0],ylim_old[1]+ylim_pad)
+    fig_name = figdir+f"/Rref_{jeteta_bins.idx2str(etaidx)}"
+    print("Saving plot with the name = ", fig_name+".pdf / .png")
+    plt.savefig(fig_name+'.pdf')
+    plt.savefig(fig_name+'.png')
+    
+#     ax.set_xlim(10,40)
+#     print("DY:", DY200)
+#     hax = plt.subplot(1,2,2)
+#     ax.set_position(good_pos)
+#     hax.set_position(good_pos)
+#     plt.annotate('', xy=(25, DY200[0]), xytext=(0, 5), 
+#             arrowprops=dict(facecolor='black', shrink=0.),
+#                 )
+#     np.searchsorted(30)
+    pt1_idx = np.searchsorted(ptvals, 35)
+    pt1 = ptvals[pt1_idx]
+#     Rtot_smooth
+    xarrow = convert_xpos(pt1, ax.get_xlim())
+    yarrow = convert_ypos(Rtot_smooth[pt1_idx], ax.get_ylim())
+    dyarrow = convert_ypos(0, ax.get_ylim()) - yarrow
+    mc = next(ax._get_lines.prop_cycler)
+    ax.arrow(xarrow, yarrow, 0, dyarrow, width=0.01, transform=ax.transAxes, length_includes_head=True, color=mc['color'])
+    
+    yarrow2 = convert_ypos(g_unc[pt1_idx], ax.get_ylim())
+    dyarrow2 = convert_ypos((g_unc-Rtot_smooth)[pt1_idx], ax.get_ylim()) - yarrow2
+    ax.arrow(xarrow, yarrow2, 0, dyarrow2, width=0.01, transform=ax.transAxes, length_includes_head=True, color=mc['color'])
+
+    pt3_idx = np.searchsorted(ptvals, 20)
+    pt3 = ptvals[pt3_idx]
+    xarrow3 = convert_xpos(pt3, ax.get_xlim())
+    yarrow3 = convert_ypos(Rdijet0[pt3_idx], ax.get_ylim())
+    dyarrow3 = convert_ypos(Rdijet[pt3_idx], ax.get_ylim()) - yarrow3
+    mc = next(ax._get_lines.prop_cycler)
+    ax.arrow(xarrow3, yarrow3, 0, dyarrow3, width=0.007, transform=ax.transAxes, length_includes_head=True, color=mc['color'])
+
+    yarrow4 = convert_ypos(DY200[0], ax.get_ylim())
+    ax.arrow(xarrow3, yarrow4, 0, dyarrow3, width=0.007, transform=ax.transAxes, length_includes_head=True, color=mc['color'])
+    fig_name+='_arrows'
+    print("Saving plot with the name = ", fig_name+".pdf / .png")
+    plt.savefig(fig_name+'.pdf')
+    plt.savefig(fig_name+'.png')
+    #     hax.set_axis_off()
+#     plt.plot(25, DY200[0], 'ko', marker=r'$\downarrow$', markersize=20)
+#     arrow = mpatches.FancyArrow(0, 0, 2, 1,
+#                                  width=2, length_includes_head=True)
+#     ax.add_patch(arrow)
+#     ax.arrow(25, DY200[0], 0, -DY200[0], width = 2, length_includes_head=True, head_width = 1.2)
+
+    plt.show()
+    
+        # ax.plot(mov,markersize=0, label="After smoothing")
 
 
 # def plot_all_flavor_comparison(num_sample_name,
