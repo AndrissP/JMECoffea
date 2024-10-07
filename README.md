@@ -5,7 +5,7 @@ This code contains a columnar-based calculation of MC jet energy corrections (JE
 The main structure of the code:
 - `run_processor.py` runs the suplied coffea processor (e.g., `CoffeaJERCProcessor_L5.py`) and saves the results in .coffea files.
 - `fit_response_distributions.py` fits the response distributions and stores the results in .txt/.json files.
-- `correction_fitter.ipynb` reads the response fit results, fits them vs the reco pt and stores JEC as `.txt` files.
+- `correction_fitter.ipynb` or `correction_fitter.py` reads the response fit results, fits them vs the reco pt and stores JEC as `.txt` files.
 - `flavor_fractions_and_uncertainties.ipynb` reads the response histograms, response fits and the flavor corrections and produces flavor uncertainties and relevent plots. Also, it produces the plots of the fractions of each jet flavor in bins of jet pt.
 - `plotters/Plotting_comparison.ipynb` allows to plot different responses and corrections vs pt or jet_eta.
 
@@ -87,7 +87,10 @@ python fit_response_distributions.py
 The fit results are stored in .txt files in `out_txt/` and plots in `fig/`.
 
 ### Fitting respponses and creating output txt files
-Follow `correction_fitter.ipynb`.
+```
+python correction_fitter.py
+```
+Or follow `correction_fitter.ipynb`.
 
 ### Fitting the flavor uncertainties
 Follow `flavor_fractions_and_uncertainties.ipynb`.
