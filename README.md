@@ -43,7 +43,7 @@ Clone the repo
 git clone git@github.com:AndrissP/JMECoffea.git
 ```
 
-Install the package in the editable state in a virtual environment. Explanation of this is in the [stackoverflow page]([url](https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder/50194143#50194143)):
+Install the package in the editable state in a virtual environment. Explanation of this is in the [stackoverflow page](https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder/50194143#50194143):
 ```
 python -m venv venv
 pip install -e .
