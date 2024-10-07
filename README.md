@@ -1,18 +1,18 @@
 # JMECoffea
 
-This code contains a columnar-based calculations of MC jet energy corrections (JEC) and flavor uncertainties, following the perscriptions of arxiv:1607.03663. At the moment, the code (L5_flavour_dep_corr branch) is adapted for the calculation of L5 flavor JEC and L2/L3 correction part is not tested.
+This code contains a columnar-based calculation of MC jet energy corrections (JEC) and flavor uncertainties, following the perscriptions of arxiv:1607.03663. At the moment, the code (L5_flavour_dep_corr branch) is adapted for the calculation of L5 flavor JEC and L2/L3 correction part is not tested.
 
 The main structure of the code:
-- `run_processor.py` run the suplied coffea processor and saves the results in .coffea files.
-- `fit_response_distributions.py` fits the response distributions and stores the results in .txt files.
-- `correction_fitter.ipynb` reads the response fit results, fits them vs the reco pt and stores JEC as `.txt` files
+- `run_processor.py` runs the suplied coffea processor (e.g., `CoffeaJERCProcessor_L5.py`) and saves the results in .coffea files.
+- `fit_response_distributions.py` fits the response distributions and stores the results in .txt/.json files.
+- `correction_fitter.ipynb` reads the response fit results, fits them vs the reco pt and stores JEC as `.txt` files.
 - `flavor_fractions_and_uncertainties.ipynb` reads the response histograms, response fits and the flavor corrections and produces flavor uncertainties and relevent plots. Also, it produces the plots of the fractions of each jet flavor in bins of jet pt.
 - `plotters/Plotting_comparison.ipynb` allows to plot different responses and corrections vs pt or jet_eta.
 
 
 ## Set-up
-Several set-ups option exist depending on if you are running on [lxplus](#set-up-coffea-on-the-lxplus-with-the-lcg-nightlies-environment-and-dask-on-htcondor), [lpc](#instructions-for-the-lpc-and-singularity) or [coffea casa](#instructions-for-coffea-casa). Running on any lxpus or lpc using singularity is possible but not stated here.
-### Set up coffea on the **lxplus** with the lcg nightlies environment and dask on HTCondor:
+Several set-up options exist depending if you are running on [lxplus](#set-up-coffea-on-the-lxplus-with-the-lcg-nightlies-environment-and-dask-on-htcondor), [lpc](#instructions-for-the-lpc-and-singularity) or [coffea casa](#instructions-for-coffea-casa). Running on any lxpus or lpc using singularity is possible but not stated here.
+### Set up coffea on the **lxplus** with the lcg environment and running using dask on HTCondor:
 
 Load the `lcg` environment with the relevant packages including `coffea`
 ```
@@ -43,7 +43,7 @@ Clone the repo
 git clone git@github.com:AndrissP/JMECoffea.git
 ```
 
-To get imports of the path work well, install the package in the editable state in a virtual environment. Explanation of this is here: https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder/50194143#50194143:
+Install the package in the editable state in a virtual environment. Explanation of this is in the [stackoverflow page]([url](https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder/50194143#50194143)):
 ```
 python -m venv venv
 pip install -e .
