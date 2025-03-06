@@ -1,3 +1,8 @@
+''' The script compares all the flavour responses vs pt in one plot for Herwig and Pythia.
+Run using `python plotters/plot_all_flavors.py`
+'''
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -22,8 +27,6 @@ out_txt_path = 'out_txt'
 def read_data2(mean_name, samp, tag1):
     return read_or_recreate_data_txt(mean_name, samp, tag1, out_txt_path)
 
-# from common_binning import JERC_Constants
-
 from fileNames.available_datasets import legend_labels
 ttbarlab = legend_labels['ttbar']['lab']
 
@@ -41,22 +44,12 @@ color_scheme = {key: cycler_vals
 # color_scheme = {key: cycler_vals
 #     for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'd', 'u', 's', 'q', 'cs'])}
 
-#### some newer versions of pyplot and mplhep, aren't good friends with jupyter
-#### To make the plots be formatted directly well, we need to make a dummy plot and rerun the import
-### (a very silly solution)
-# plt.figure(num=None, figsize=(2, 2), dpi=80)
-# plt.plot([1,2,3],[1,3,3])
-# import matplotlib.pyplot as plt
 pltStyle('hep')
-# plt.rcParams['figure.dpi'] = 100
 
 def read_data4plot(tag, closure=1, path=out_txt_path):
     '''Read the Mean, MeanStd, Median, MedianStd and RecoPt values of the data with tag `tag`.
     If closure==1, there is no clusure, otherwise it has to be of the same shape as the data read
     '''
-#     file_path = f'../out_txt/fit_results_L5_{tag}.json'
-#     with open(file_path, 'r') as json_file:
-#         json_data = json.load(json_file)
     
     data = read_or_recreate_data(tag, out_txt_path)['data']
 
@@ -85,7 +78,17 @@ def draw_all_flavors(data_dict,
                               pt_min = 17,
                               inverse = True,
                               flavors = ['b', 'g', 'u', 'd', 'c', 's', 'all', 'q', 'unmatched']):
-    
+    ''' make a plot of the response_vs_pt for all the flavours for the bin given by the index `binidx`.
+    data_dict: input data dictionary. The order of the keys for plotting is given by `samples`
+    function_dict: splines to be drawn over the points
+    samples: list of keys of the data_dict to be plotted
+    etabins: the eta binning
+    ptbins: the pt binning
+    binidx: the index of the eta bin to be plotted
+    pt_min: the minimum pt value to be plotted
+    inverse: if True, the response is inverted to correction
+    flavors: the list of flavours to be plotted
+    '''
 
     plotvspt = True
     use_recopt = True
@@ -100,15 +103,16 @@ def draw_all_flavors(data_dict,
     for flav in flavors:
         lab = legend_dict_short[flav]
 
-        data2 = data_dict[samples[1]][flav]
-        yvals, stds, xvals = prepare_points(data2, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt)
-        # points = ax.errorbar(xvals, yvals,
-        #                 yerr=stds,
-        #                 linestyle='none', label=lab,  **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=1.0)
-        # breakpoint()
-        points2 = ax.errorbar(xvals, yvals,
-                        yerr=stds,
-                        linestyle='none', mfc='white', markeredgewidth=1.2, **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=0.8)
+        if len(samples)>1:
+            data2 = data_dict[samples[1]][flav]
+            yvals, stds, xvals = prepare_points(data2, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt)
+            # points = ax.errorbar(xvals, yvals,
+            #                 yerr=stds,
+            #                 linestyle='none', label=lab,  **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=1.0)
+            # breakpoint()
+            points2 = ax.errorbar(xvals, yvals,
+                            yerr=stds,
+                            linestyle='none', mfc='white', markeredgewidth=1.2, **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=0.8)
 
         data1 = data_dict[samples[0]][flav]
         yvals, stds, xvals = prepare_points(data1, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt)
@@ -119,13 +123,15 @@ def draw_all_flavors(data_dict,
 
         if flavors[0] == flav:
             points_ls.append(points[0])
-            points_ls.append(points2[0])
+            if len(samples)>1:
+                points_ls.append(points2[0])
 
         yvals_cont = prepare_splines(function_dict[samples[0]][flav], xvals_c, etabins, binidx, inverse)
         # print(yvals_cont)
         ax.plot(xvals_c, yvals_cont, markersize=0, **color_scheme[flav], linewidth=1.0)
-        yvals_cont = prepare_splines(function_dict[samples[1]][flav], xvals_c, etabins, binidx, inverse)
-        ax.plot(xvals_c, yvals_cont, '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
+        if len(samples)>1:
+            yvals_cont = prepare_splines(function_dict[samples[1]][flav], xvals_c, etabins, binidx, inverse)
+            ax.plot(xvals_c, yvals_cont, '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
     bins = etabins
     if plotvspt:
         xlabel = r'$p_{T,reco}$ (GeV)' if use_recopt else r'$p_{T,ptcl}$ (GeV)'
@@ -147,7 +153,7 @@ def draw_all_flavors(data_dict,
     ax.set_xticklabels([])
     ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
 
-    legend_labs = [samples[0], samples[1]]
+    legend_labs = samples # [samples[0], samples[1]]
     legend1 = ax.legend(points_ls, legend_labs, loc="upper left", bbox_to_anchor=(0.54, 1))
     leg2 = ax.legend(ncol=3, loc='upper left', bbox_to_anchor=(0.54, 0.84))
     ax.add_artist(legend1)
@@ -161,28 +167,13 @@ def draw_all_flavors(data_dict,
     ax.set_xlim(xlims)
     ax.set_ylim(left_lim, right_lim+lim_pad)
 
-    # ### make the y-axis ticks in the ratio plot look nice: add a decent amount of major and minor ticks
-    # ax2.yaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=5, steps=[1, 2, 5, 10]))
-    # ax2.yaxis.set_minor_locator(mpl.ticker.MaxNLocator(nbins=25, steps=[1, 2, 5, 10])) #mpl.ticker.LinearLocator(numticks=25)
-    # ### remove the highest tick lavel from the ratio plot as it overlaps with the lowest label from the main plot 
-    # tick_labels = ax2.get_yticks() 
-    # tick_labels = [f'{tick:.10g}' for tick in tick_labels]  ### remove floating point digits
-    # tick_labels = tick_labels[:-1]
-    # ax2.set_yticks(ax2.get_yticks()[:-1])
-    # ax2.set_yticklabels(tick_labels)
 
-    # breakpoint()
     ############################ Adding the CMS labels and saving the plots ######################################
     eta_string = bins.idx2str(binidx) #'_eta'+str(etabins_abs[etaidx])+'to'+str(etabins_abs[etaidx+1])
-#     eta_string = eta_string.replace('.','')
     fig_corr_name = 'corr' if inverse else 'med_resp'
     fig_x_str = 'pt' if plotvspt else 'eta'
     run_name =  f'{fig_corr_name}_vs_{fig_x_str}'
-    # run_name = (run_name.replace(legend_labels["ttbar"]["lab"], 'ttbar').replace(', ', '-')
-    #             .replace(" ", "_").replace("+", "_").replace('(', '').replace(')', '').replace('/', '').replace('\n', '').replace('$', '').replace('\\', '')
-    # )
     dir_name1 = f'fig/{fig_corr_name}_vs_{fig_x_str}_comparisons_all_flav/'
-    # dir_name2 = dir_name1 #+run_name
     if not os.path.exists(dir_name1):
         os.mkdir(dir_name1)
         print("Creating directory ", dir_name1)
@@ -191,7 +182,6 @@ def draw_all_flavors(data_dict,
         print("Creating directory ", dir_name1)
 
     hep.cms.label(hep_label, loc=0, data=False, ax=ax, rlabel='')
-    # hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
     hep.label.exp_text(text=f'{bins.idx2plot_str(binidx)}', loc=2
                        , ax=ax)
     fig_name = dir_name1+'/'+run_name+'_'+eta_string
@@ -235,19 +225,8 @@ def prepare_points(data_dict, pt_min=17, binidx=0,
         stds = yvals**2*stds
 
     return yvals, stds, xvals #, validx    
-    # validx_all = np.logical_not(np.any(np.logical_not(validx), axis=0))
-    # if np.sum(validx_all) == 0:
-    #     validx_all = np.ones(validx_all.shape)==1
-    # xspline = linspacefun(np.min(xvals[0,validx_all]),  np.max(xvals[0,validx_all]), 100)
-    # xlog10_spline = np.log10(xspline)
-
-    # bins2 = ptbins if plotvspt else etabins
-    # wd = np.abs(np.diff(bins2.edges))[start:end] #bin_widths
 
 def prepare_splines(function, xvals_c, bins, binidx, inverse):
-    # yvals_cont = {}
-    # yvals_spline = {}
-    # for name in function_dict.keys():
     correction_fnc, closure = function
     xv_cont = xvals_c
     if closure is None or closure==1:
@@ -256,20 +235,11 @@ def prepare_splines(function, xvals_c, bins, binidx, inverse):
     #to ensure that the correction is applied from the right side of the bin border
     binval = bins.edges[binidx]+0.001
     vals_cont = (np.array([binval]), xv_cont)
-    # vals_spline = (np.array([binval]), xspline)
     if inverse:
         yvals_cont = correction_fnc(*vals_cont)/closure(*vals_cont)
     else:
         yvals_cont = closure(*vals_cont)/correction_fnc(*vals_cont)
-    # breakpoint()
     return yvals_cont
-    # yvals_spline = correction_fnc(*vals_spline)/closure(*vals_spline)
-        
-    # eta_str = ''
-    # corr_etabins = correction_fnc._bins['JetEta'] 
-    # corr_bin_idx = np.searchsorted(corr_etabins, binval, side='right')-1
-    # if corr_bin_idx==len(corr_etabins):
-    #     corr_bin_idx-=1
 
 
 # correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, correction_for = 'Py')
@@ -329,39 +299,54 @@ tag4Her = '_L5_DY-MG-Her'+eta_binning_str
 # tag3 = '_L5_QCD-MG-Py'+eta_binning_str
 # tag3 = '_L5_QCD-divided'
 
-closure_corr = read_data4plot(tag1)['all']['Median'] #divide by Pythia-standalone QCD
 
-mean_name = "Median"
-mean_name_std = mean_name+'Std'
+    
+if __name__ == "__main__":
+    closure_corr = read_data4plot(tag1)['all']['Median'] #divide by Pythia-standalone QCD
 
-etabins = JetEtaBins(eta_binning, absolute=True)
-ptbins = PtBins("MC_truth")
+    mean_name = "Median"
+    mean_name_std = mean_name+'Std'
+
+    etabins = JetEtaBins(eta_binning, absolute=True)
+    ptbins = PtBins("MC_truth")
 
 
-data = {
-        f"{ttbarlab} Pow+Py8": read_data4plot(tag3, closure_corr),
-        f"{ttbarlab} Pow+Her7": read_data4plot(tag3Her, closure_corr),
-        }
+    # data = {
+    #         f"QCD MG+Py8": read_data4plot(tag2, closure_corr),
+    #         f"QCD MG+Her7": read_data4plot(tag2Her, closure_corr),
+    #         }
 
-functions = {
-        f"{ttbarlab} Pow+Py8":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_{flav}T'], None]  for flav in flavors},
-        f"{ttbarlab} Pow+Her7":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_Her_{flav}T'], None]  for flav in flavors}
-        }
+    # functions = {
+    #         f"QCD MG+Py8":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_{flav}J'], None]  for flav in flavors},
+    #         f"QCD MG+Her7":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_Her_{flav}J'], None]  for flav in flavors}
+    #         }
 
-for k in range(etabins.nbins):
-# for k in etabins.get_bin_idx([0, 1.305, 2.5, 4]):
-    # data = {tag:data_to_read[tag][samp] for tag in data_to_read}
-    # data = {key:np.array([data[key][mean_name], data[key][mean_name_std], data[key]["MeanRecoPt"]]) for key in data}
-#     for k in range(1):
-#     for k in ptbins.get_bin_idx([20, 35, 150, 400]):
-    print('Plotting eta: ', etabins.idx2str(k))
+    data = {
+            f"{ttbarlab} Pow+Py8": read_data4plot(tag3, closure_corr),
+            # f"{ttbarlab} Pow+Her7": read_data4plot(tag3Her, closure_corr),
+            }
 
-    draw_all_flavors(data,
-                              functions,
-                              samples = list(data.keys()),
-                              etabins=etabins, #np.array(JERC_Constants.etaBinsEdges_CaloTowers_full()),
-                              ptbins=ptbins, #np.array(JERC_Constants.ptBinsEdgesMCTruth()),
-                              binidx=k, 
-                              pt_min = 17,
-                              inverse = False,
-                              flavors = flavors)
+    functions = {
+            f"{ttbarlab} Pow+Py8":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_{flav}T'], None]  for flav in flavors},
+            # f"{ttbarlab} Pow+Her7":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_Her_{flav}T'], None]  for flav in flavors}
+            }
+
+
+
+    for k in range(etabins.nbins):
+    # for k in etabins.get_bin_idx([0, 1.305, 2.5, 4]):
+        # data = {tag:data_to_read[tag][samp] for tag in data_to_read}
+        # data = {key:np.array([data[key][mean_name], data[key][mean_name_std], data[key]["MeanRecoPt"]]) for key in data}
+    #     for k in range(1):
+    #     for k in ptbins.get_bin_idx([20, 35, 150, 400]):
+        print('Plotting eta: ', etabins.idx2str(k))
+
+        draw_all_flavors(data,
+                                functions,
+                                samples = list(data.keys()),
+                                etabins=etabins, #np.array(JERC_Constants.etaBinsEdges_CaloTowers_full()),
+                                ptbins=ptbins, #np.array(JERC_Constants.ptBinsEdgesMCTruth()),
+                                binidx=k, 
+                                pt_min = 17,
+                                inverse = False,
+                                flavors = flavors)
