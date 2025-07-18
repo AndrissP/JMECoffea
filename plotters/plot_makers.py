@@ -178,7 +178,7 @@ def plot_corrections_eta(mean, meanstd, ptbins, etabins_c, tag, flavor, plotptva
     
 from helpers import gauss
 import matplotlib.ticker as ticker
-def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', txt2print='', print_txt=True ):
+def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', txt2print='', print_txt=True, simple_depiction=False):
         
     xvals = histo.axes[0].centers
     f_xvals = np.linspace(xvals[fitlims[0]],xvals[fitlims[1]],5001)
@@ -191,12 +191,16 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
     
     fig, ax2 = plt.subplots();
     colors=plt.rcParams['axes.prop_cycle'].by_key()['color']
-    # hep.histplot(histo.values(), histo.axes[0].edges-0.20, yerr=np.sqrt(histo.variances()), label=dataset_name, histtype='fill', alpha=0.6, color=colors[0])
-    plot = histo.plot1d(ax=ax2, label=dataset_name, histtype='fill', alpha=0.6, color=colors[0])
-    plot = histo.plot1d(ax=ax2, histtype='errorbar', alpha=0.6, color=colors[0], linewidth=1.1, markersize=0)
-    # ax2.plot(f_xvals, fgaus, label='Gaussian fit', markersize=0, linewidth=1.8, color=colors[1])
-    ax2.plot(f_xvals, fgaus, label='fit', markersize=0, linewidth=1.8, color=colors[1])
-    ax2.plot(f_xvals_full, fgaus_full, '--', markersize=0, linewidth=1.2, color=colors[1])
+    if simple_depiction:
+        hep.histplot(histo.values(), histo.axes[0].edges-0.20, yerr=np.sqrt(histo.variances()), label=dataset_name, histtype='fill', alpha=0.6, color=colors[0])
+        ax2.plot(f_xvals-0.2, fgaus, label='Gaussian fit', markersize=0, linewidth=2.2, color=colors[1])
+        ax2.plot(f_xvals_full-0.2, fgaus_full, '--', markersize=0, linewidth=1.6, color=colors[1])
+
+    else:
+        plot = histo.plot1d(ax=ax2, label=dataset_name, histtype='fill', alpha=0.6, color=colors[0])
+        plot = histo.plot1d(ax=ax2, histtype='errorbar', alpha=0.6, color=colors[0], linewidth=1.1, markersize=0)
+        ax2.plot(f_xvals, fgaus, label='fit', markersize=0, linewidth=1.8, color=colors[1])
+        ax2.plot(f_xvals_full, fgaus_full, '--', markersize=0, linewidth=1.2, color=colors[1])
     ax2.set_xlabel("Response ($p_{T,reco}/p_{T,ptcl}$)")
     ax2.set_ylabel("Events")
     max_lim = np.min([np.max(xvals), 2.0])
@@ -209,15 +213,49 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
     ax2.yaxis.set_major_formatter(formatter)
     yh = (ylim[1]-ylim[0])
     ax2.set_ylim(ylim[0], ylim[1]+yh*0.2 )
+    if simple_depiction:
+        #plot JES
+        def convert_pos(y, lims):
+            ay, by = lims
+            return (y - ay)/(by - ay)
+        x1 = p2[1]-0.2
+        x2 = 1.0
+        y1 = ylim[1]-yh*0.01
+        xarrow1 = convert_pos(x1, ax2.get_xlim())
+        dxarrow = convert_pos(x2, ax2.get_xlim()) - xarrow1
+        yarrow = convert_pos(y1, ax2.get_ylim())
+        #     mc = next(ax._get_lines.prop_cycler)
+        ax2.vlines(x2, 0-yh*0.02, ylim[1]+yh*0.12, linestyles='--',color="#7030A0",
+            linewidth=2.2,)
+        ax2.vlines(x1, 0-yh*0.07, ylim[1]+yh*0.12, linestyles='-',color="#7030A0",
+            linewidth=2.2,)
+        ax2.arrow(xarrow1, yarrow, dxarrow, 0, width=0.008, transform=ax2.transAxes, length_includes_head=True, color='#7030A0')
+        ax2.text(x2+0.05, ylim[1]-yh*0.13, "Mean:\nJES", color='#7030A0', fontsize=13, ha='left')
+        
+        ## plot JER
+        x2 = p2[1]-0.2+p2[2]*1.2
+        y1 = max(fgaus)/2
+        dxarrow = convert_pos(x2, ax2.get_xlim()) - xarrow1
+        yarrow = convert_pos(y1, ax2.get_ylim())
+        ax2.arrow(xarrow1+dxarrow*0.5, yarrow, dxarrow*0.5, 0, width=0.008, transform=ax2.transAxes, length_includes_head=True, color='#055551')
+        ax2.arrow(xarrow1+dxarrow*0.5, yarrow, -dxarrow*0.5, 0, width=0.008, transform=ax2.transAxes, length_includes_head=True, color='#055551')
+        ax2.text(xarrow1-0.12, yarrow+0.03, "Width:\nJER", transform=ax2.transAxes, color='#055551', fontsize=13, ha='right')
+        ax2.legend(["data", "Gausian fit"])
+
+        # ax2.text(x2-0.1, y1, "Width\nJER", transform=ax2.transAxes, color='green', fontsize=12, ha='right')
+        # ax2.text(1, 1, "Width\nJER", transform=ax2.transAxes, color='green', fontsize=12, ha='right')
+        # ax2.text(1, 1, "Width\nJER", color='green', fontsize=12, ha='right')
+    else:
+        ax2.legend()
+        if print_txt:
+            hep_txt+=txt2print
+
 
     # #### for the poster
     # ax2.vlines(0.996, 1.0e-5, 1.9e-5, linestyles='-',color="black",
     #         linewidth=2.2,)
     # ax2.text(1.10, 1.55e-5, r'median $\approx$ mean '+f'\n'+r'=$0.996\pm0.004$ ', fontsize=11, color='black')
 
-    if print_txt:
-        hep_txt+=txt2print
-    ax2.legend()
     # hep.label.exp_text(text=hep_txt, loc=0)
     hep.cms.label(hep_label, loc=0, data=False, ax=ax2, rlabel='')
     hep.label.exp_text(text=hep_txt, loc=2)

@@ -29,9 +29,10 @@ def make_comparison_plot(data_dict,
                               binidx=0, flav='b',
                               pt_min = 17,
                               ratio_name='ratio',
-                              inverse=True, plotvspt=True, ratio_ylim=None,
+                              inverse=True, plotvspt=True, ratio_ylim=None, ylim=None,
                               reset_colors = True,
-                              custom_colors = None,):
+                              custom_colors = None,
+                              extra_text='',):
     ''' Make a plot of the jet energy response vs pt for the data points in the dictionary `data_dict`
     Compare with with lines obtained from coffea evaluators in `function_dict`.
     `function_dict` can be None than, no lines are shown.
@@ -231,6 +232,9 @@ def make_comparison_plot(data_dict,
 
         if not ratio_ylim==None:
             ax2.set_ylim(ratio_ylim)
+
+        if not ylim==None:
+            ax.set_ylim(ylim)
         # else:
         #     ### Recalculate the limits for the ratio plot
         #     yerr_norm = np.concatenate(data_model_ratio_unc)
@@ -305,7 +309,8 @@ def make_comparison_plot(data_dict,
 
     hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')
     # hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
-    hep.label.exp_text(text=f'{bins.idx2plot_str(binidx)}\n{flav} jets', loc=2, ax=ax)
+    flav_txt = flav.replace('_', ' ')
+    hep.label.exp_text(text=f'{bins.idx2plot_str(binidx)}\n{flav_txt} jets'+extra_text, loc=2, ax=ax)
     fig_name = dir_name2+'/'+run_name+"_"+flav+'_'+eta_string
     print("Saving plot for eta = ", eta_string)
     print("Saving plot with the name = ", fig_name+".pdf / .png")
@@ -342,6 +347,8 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
                             flav='',
                             ratio_name=None,
                             ratio_type1=True,
+                            scale_uncert = 1.0,
+                            sci_format = False
                             ):
     ''' Make a double ratio plot for comparing flavor vs anti-flavor responses
     To do:
@@ -349,13 +356,13 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
     '''
         
     median_1 = read_data("Median", flav, outputname_denom)
-    medianstd_1 = read_data("MedianStd", flav, outputname_denom)
+    medianstd_1 = read_data("MedianStd", flav, outputname_denom)/scale_uncert
     median_2 = read_data("Median", flav+'bar', outputname_denom)
-    medianstd_2 = read_data("MedianStd", flav+'bar', outputname_denom)
+    medianstd_2 = read_data("MedianStd", flav+'bar', outputname_denom)/scale_uncert
     median_3 = read_data("Median", flav, outputname_num)
-    medianstd_3 = read_data("MedianStd", flav, outputname_num)
+    medianstd_3 = read_data("MedianStd", flav, outputname_num)/scale_uncert
     median_4 = read_data("Median", flav+'bar', outputname_num)
-    medianstd_4 = read_data("MedianStd", flav+'bar', outputname_num)
+    medianstd_4 = read_data("MedianStd", flav+'bar', outputname_num)/scale_uncert
 
         
     yvals_base = median_1
@@ -398,6 +405,13 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
     yvals_ref2[(yvals_ref2==0) | (np.abs(yvals_ref2)==np.inf)] = np.nan
     std_ref2 = std_ref2[start:,etaidx]
 
+    from matplotlib.ticker import ScalarFormatter
+    if sci_format:
+        # Configure ScalarFormatter
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-3, 3))  # Adjust these limits as needed
+        ax2.yaxis.set_major_formatter(formatter)
 
     rel_mc_unc =  std_base/yvals_base 
 
@@ -458,9 +472,12 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
 
     if ratio_name is None:
         ratio_name='Jet response ratio, $\overline{'+flav+'}/'+flav+'$' if ratio_type1 else f'Jet response ratio, {legend_names[0]}/{legend_names[1]}'
+    # if sci_format:
+    #     ax2.set_ylabel(ratio_name+'$\times 10^{-3}$ + 1')
+    # else:
     ax2.set_ylabel(ratio_name)
-    ax2.tick_params(axis="both", which="major", pad=8)
-    ax2.tick_params(direction="in", top=True, right=True, which="both")
+    # ax2.tick_params(axis="both", which="major", pad=8)
+    # ax2.tick_params(direction="in", top=True, right=True, which="both")
 
     # fig.set_tight_layout(True)
 
@@ -500,7 +517,10 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
     left_lim = np.min((y_norm-yerr_norm)[norm_pos])
     right_lim = np.max((yerr_norm+y_norm)[norm_pos])
     lim_pad = (right_lim - left_lim)/10
-    ax2.set_ylim(left_lim-lim_pad, right_lim+lim_pad*2.5)
+    if sci_format:
+        ax2.set_ylim(left_lim-lim_pad, right_lim+lim_pad*5)
+    else:
+        ax2.set_ylim(left_lim-lim_pad, right_lim+lim_pad*2.5)
 
     ax2.set_xlabel(r'$p_T$ (GeV)');
     ax2.set_xscale('log')
@@ -516,7 +536,10 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
     leg1 = ax2.legend()
 
     eta_string = etabins.idx2str(etaidx) #r'{:0.2f}$<|\eta|<${:0.2f}'.format(etabins.edges[etaidx], etabins.edges[etaidx+1])
-    hep.cms.label("Private work", loc=0, data=False, ax=ax2, rlabel='')
+    if sci_format:
+        hep.cms.label("Private work", loc=2, data=False, ax=ax2, rlabel='')
+    else:
+        hep.cms.label("Private work", loc=0, data=False, ax=ax2, rlabel='')
     # hep.cms.label("Preliminary", loc=0, data=False, ax=ax2)
     
     dir_name1 = f'fig/double_ratios'
@@ -527,7 +550,12 @@ def make_double_ratio_plot(outputname_num, outputname_denom, etaidx=0,
     if not os.path.exists(dir_name2):
         os.mkdir(dir_name2)
         print("Creating directory ", dir_name2)
-    hep.label.exp_text(text=f'{etabins.idx2plot_str(etaidx)}\n{flav} jets', loc=2, ax=ax2)
+    
+    if sci_format:
+        hep.label.exp_text(text=f'\n\n{etabins.idx2plot_str(etaidx)}, {flav} jets', loc=2, ax=ax2)
+    else:
+        hep.label.exp_text(text=f'{etabins.idx2plot_str(etaidx)}\n{flav} jets', loc=2, ax=ax2)
+
     fig_name = dir_name2+'/double_ratio_'+'_'.join(legend_names)+"_"+flav+'_'+eta_string
     # fig_name = 'fig/corr_vs_pt'+flav+eta_string+'_L5_double_ratio'+'-median'
     fig_name = fig_name.replace('$t\overline{\, t}$', 'ttbar').replace(', ', '-').replace('(', '').replace(')', '').replace(' ','_')

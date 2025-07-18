@@ -128,7 +128,7 @@ def plot_Efractions(sampledict, etaidx, jeteta_bins, ptbins, legenddict=None, sa
 from helpers import hist_div, hist_add, hist_mult
 from helpers import hist_div, hist_add, hist_mult
 def plot_Efractions_ratio(sampledict, samples, etaidx, jeteta_bins, ptbins, legenddict=None, legenddict2 = None, saveplot=False,
-                          legend1_loc=(0.42, 1), legend2_loc=(0.56, 1), ratio_title="Her7/Py8", ratio_lim=(0.5,1.5), fig_name=None, ylab_name=None, ylim=(-0.1, 1.25*1.3)):
+                          legend1_loc=(0.42, 1), legend2_loc=(0.56, 1), ratio_title="Her7/Py8", ratio_lim=(0.5,1.5), fig_name=None, ylab_name=None, ylim=(-0.1, 1.25*1.3), draw_spline=True):
     # samples = list(sampledict.keys())
     ptbins_c = ptbins.centres
     ptbins_e = ptbins.edges
@@ -159,15 +159,16 @@ def plot_Efractions_ratio(sampledict, samples, etaidx, jeteta_bins, ptbins, lege
                              linestyle='none', label=lab,  **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=1.0)
         points2 = ax_main.errorbar(ptbins_c_plot, qfracs1[flav][plot_range, etaidx],
                               yerr=np.sqrt(qfrac_var1[flav][plot_range, etaidx]),
-                              linestyle='none', mfc='none', markeredgewidth=1.2, **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=1.0)
+                              linestyle='none', mfc='white', markeredgewidth=1.2, **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=1.0)
 
         valid_fit_val = ~(np.isnan(qfracs1[flav]) | np.isinf(qfracs1[flav]) | (qfracs1[flav]==0))
-        ax_main.plot(xplot2, spline0[flav][etaidx](np.log10(xplot2)),
-                      '-.', markersize=0, **color_scheme[flav], linewidth=1.0)        
-        # ax_main.plot(xplot2, spline2D0[flav]((np.log10(xplot2), np.repeat([jeteta_bins.centres[etaidx]],len(xplot2)))),
-        #               '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
-        ax_main.plot(xplot2, spline1[flav][etaidx](np.log10(xplot2)),
-              '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
+        if draw_spline:
+            ax_main.plot(xplot2, spline0[flav][etaidx](np.log10(xplot2)),
+                        '-.', markersize=0, **color_scheme[flav], linewidth=1.0)        
+            # ax_main.plot(xplot2, spline2D0[flav]((np.log10(xplot2), np.repeat([jeteta_bins.centres[etaidx]],len(xplot2)))),
+            #               '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
+            ax_main.plot(xplot2, spline1[flav][etaidx](np.log10(xplot2)),
+                '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
         # ax_main.plot(xplot2, spline2D1[flav]((np.log10(xplot2), np.repeat([jeteta_bins.centres[etaidx]],len(xplot2)))),
         #       '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
 # interp((np.log(np.arange(20,60,2)),[1]*20))
@@ -240,7 +241,7 @@ def plot_Efractions_ratio(sampledict, samples, etaidx, jeteta_bins, ptbins, lege
             yerr=np.sqrt(ratio_unc[flav][plot_range, etaidx]), #[nonzero_model_yield],
             linestyle="none",
             capsize=1.6, capthick=0.7, linewidth=1.0,
-            mfc='none', markeredgewidth=1.2,
+            mfc='white', markeredgewidth=1.2,
             **color_scheme[flav],
             #fmt=marker,
         )
@@ -660,8 +661,10 @@ def plot_ratio_comparisons_samples(flav, etaidx, jeteta_bins, ptbins_c,
     plt.savefig(fig_name+'.pdf');
     plt.savefig(fig_name+'.png');
     plt.show()
-    return [[poly, xfitmin, xfitmax] for poly, xfitmin, xfitmax in zip(polys, xfitmins, xfitmaxs)]
-    # return [p_poly4, xfitmin, xfitmax]
+    if len(polys)>1:
+        return [[poly, xfitmin, xfitmax] for poly, xfitmin, xfitmax in zip(polys, xfitmins, xfitmaxs)]
+    else:
+        return [p_poly4, xfitmin, xfitmax]
 
 # def plot_ratio_all(flav, etaidx, jeteta_bins, ptbins_c,
 #                                    eta_binning_str, 
@@ -1066,13 +1069,17 @@ def plot_HerPydiff(ptvals, HerPy_differences, additional_uncertainty_curves, div
     ax.hlines(vlinecoord ,1, 10000,color="gray",
         linewidth=1, alpha=0.4)
 
-    ax.hlines(addc['g20q80_fixed'], 1, 10000, linestyles='--',color=color_scheme["DY200"]['color'],
-        linewidth=1, alpha=0.9, label='DY at 200 GeV')
+    line = ax.hlines(addc['g20q80_fixed'], 1, 10000, linestyles='--',color=color_scheme["DY200"]['color'],
+        linewidth=1, alpha=0.9)
+    
+    lines.append(line)
+    markers.append(line)
 
     leg1_handles = [(ai,bi) for ai, bi, in zip(lines,markers)]
-    legend1 = ax.legend(leg1_handles, [legend_dict_short['QCD'], legend_dict_short['DY'], legend_dict_short['TTBAR']], loc="upper left", bbox_to_anchor=(0.02, 0.8), handlelength=1.5) # seg.len=5) #, title='correction', title_fontsize=10)
+    legend1 = ax.legend(leg1_handles, [legend_dict_short['QCD'], legend_dict_short['DY'], legend_dict_short['TTBAR'], 'DY at 200 GeV'], loc="upper left", bbox_to_anchor=(0.02, 0.84), handlelength=1.5) # seg.len=5) #, title='correction', title_fontsize=10)
 #     assert False
-    leg2 = ax.legend(ncol=1, loc='upper left', bbox_to_anchor=(0.48, 1), handlelength=1.3)#, title='assembled\nfrom QCD', title_fontsize=10)
+    if len(flavors)>0:
+        ax.legend(ncol=1, loc='upper left', bbox_to_anchor=(0.48, 1), handlelength=1.3)#, title='assembled\nfrom QCD', title_fontsize=10)
     ax.add_artist(legend1)
     xlabel = r'$p_{T}$ (GeV)'
     ax.set_xlabel(xlabel);

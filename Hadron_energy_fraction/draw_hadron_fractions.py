@@ -63,17 +63,17 @@ categories = {"$\pi^+$": [211, ],
               "$\pi^-$": [-211, ],
               "$K^+$": [321, ],
               "$K^-$": [-321, ],
-              "$[\pi^0; K^0_S]$": [130, 310],
+              "$[K^0_S, K^0_L]$": [130, 310],
               "$p$": [2212],
               "$\overline{p}$": [-2212],
               "$n$": [2112],
               "$\overline{n}$": [-2112],
               "$l^\pm$": [-13, -11, 11, 13],
               "$\gamma$": [22],
-              "$[\Sigma^+; \Sigma^+; \Theta^+; \Omega^+]$": [3222, -3112, -3312, -3334],
-              "$[\Sigma^-; \Sigma^-; \Theta^-; \Omega^-]$": [-3222, 3112, 3312, 3334],
-              "$[\Lambda; \Theta^0]$": [3122, 3322],
-              "$[\overline{\Lambda}; \overline{\Theta}^0]$": [-3122, -3322],
+              "$[\Sigma^+; \overline{\Sigma}^+; \Xi^+; \Omega^+]$": [3222, -3112, -3312, -3334],
+              "$[\Sigma^-; \overline{\Sigma}^-; \Xi^-; \Omega^-]$": [-3222, 3112, 3312, 3334],
+              "$[\Lambda; \Xi^0]$": [3122, 3322],
+              "$[\overline{\Lambda}; \overline{\Xi}^0]$": [-3122, -3322],
              }
 
 ### check for consistency
@@ -96,13 +96,37 @@ def plot_stack_all_hads(h, hist_name='tot', figdir='fig/'):
         s[ii] = s[ii]*hist_scale # if hist_scale!=0 else s[ii];
 
     fig, ax = plt.subplots()
-    s.plot(stack=True, histtype="fill")
+    s.plot(stack=True, histtype="fill", ax=ax)
     plt.ylabel("Energy fraction")
     plt.legend(bbox_to_anchor=(0, 1, 1, 0), loc="lower left", mode="expand",ncol=3); #, labels = had_labels
     fig.savefig(figdir+hist_name+'.png')
     fig.savefig(figdir+hist_name+'.pdf')
     print("Figure saved = ", figdir+hist_name+'.png')
     # plt.rcParams = rc_old
+    
+def plot_hads(h, hist_name='tot', figdir='fig/', sample='Py'):
+    h = h[:,0] #select b_jet
+    my_stack = {}
+    cat_keys = categories.keys()
+    for key in cat_keys:
+    #     complex_cat = map(lambda a: complex(a)*1j, [3112, 3122])
+        complex_cat = [complex(valii)*1j for valii in categories[key]]
+        hist_cat = h[complex_cat]
+        my_stack[key] = hist_cat
+
+    total_weight = h[sum].value
+    s = h/total_weight
+    fig, ax = plt.subplots(figsize=(12, 3))
+    s.plot(stack=True, histtype="fill", ax=ax)
+    plt.xticks(rotation=-90)
+    ax.set_ylim(0,0.24)
+    hep.cms.label("Private work", loc=0, data=False, ax=ax, rlabel='')
+    hep.label.exp_text(text=sample+f' total_weight: {np.round(total_weight)}', loc=2, ax=ax)
+    fig.savefig(figdir+hist_name+'.png')
+    fig.savefig(figdir+hist_name+'.pdf')
+    print("Figure saved = ", figdir+hist_name+'.png')
+    
+    
 
 def plot_stack_merged(h, hist_name='tot', figdir='fig/', sample='MG+Py8', antiflav=True):
     print(plt.rcParams['figure.subplot.top'])
@@ -178,6 +202,7 @@ for key in ['h_bad', 'h_good']:
     plot_stack_all_hads(h, hist_name="all_Her_"+key, figdir='fig/hadrons/')
     print("Outside funcs: ", plt.rcParams['figure.subplot.top'])
     plot_stack_merged(h, hist_name="merged_Her_"+key, figdir='fig/hadrons/', antiflav=False)
+    plot_hads(h, hist_name="Her_hadrons_"+key, sample='MG+Her7'+key)
 
 output = util.load('HadronEfractions_QCD_Pythia.coffea')
 
@@ -186,6 +211,7 @@ for key in ['h_bad', 'h_good']:
     h = output[key]
     plot_stack_all_hads(h, hist_name="all_Py_"+key, figdir='fig/hadrons/')
     plot_stack_merged(h, hist_name="merged_Py_"+key, figdir='fig/hadrons/', antiflav=False)
+    plot_hads(h, hist_name="Py_hadrons_"+key, sample='MG+Py8'+key)
 
 import pickle 
 

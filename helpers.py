@@ -526,6 +526,7 @@ def append_endpoint_redi(filenames, out_name='fileNames/TTBAR_Pythia_20UL18/file
         dasgoclient_query = f"site file={filename}"
         dasgoclient_result = subprocess.run(["dasgoclient", "-query", dasgoclient_query], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
+        all_sites_down = True
         if dasgoclient_result.returncode == 0:
             site_aliases = [line for line in dasgoclient_result.stdout.splitlines() if "T2" in line]
 
@@ -533,7 +534,6 @@ def append_endpoint_redi(filenames, out_name='fileNames/TTBAR_Pythia_20UL18/file
                 no_T2+=1
                 # print("Site Alias not found in dasgoclient output.")
 
-            all_sites_down = True
             for site_alias in site_aliases:
                 # site_alias = next((line for line in dasgoclient_result.stdout.splitlines() if "T2" in line), None)
         #         print(f"Site Alias: {site_alias}")

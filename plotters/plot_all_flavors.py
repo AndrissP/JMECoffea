@@ -348,5 +348,5 @@ if __name__ == "__main__":
                                 ptbins=ptbins, #np.array(JERC_Constants.ptBinsEdgesMCTruth()),
                                 binidx=k, 
                                 pt_min = 17,
-                                inverse = False,
+                                inverse = True,
                                 flavors = flavors)
