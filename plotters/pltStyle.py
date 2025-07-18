@@ -31,7 +31,7 @@ def pltStyle(style='hep', size_frac=2.5, font_frac=1.15):
     if style=='hep':
         '''Adapted from the mplhep CMS style'''
         hep.style.use("CMS")
-        plt.rc('font', family='serif')
+#        plt.rc('font', family='serif')
 
         ### make the size of the plot size_frac x smaller, but keep all the sizes relatively the same
         hep_parms = plt.rcParams
