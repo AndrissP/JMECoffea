@@ -1,6 +1,6 @@
 # JMECoffea
 
-This code contains a columnar-based calculation of MC jet energy corrections (JEC) and flavor uncertainties, following the perscriptions of arxiv:1607.03663. At the moment, the code (L5_flavour_dep_corr branch) is adapted for the calculation of L5 flavor JEC and L2/L3 correction part is not tested.
+This code contains a columnar-based calculation of MC jet energy corrections (JEC) and flavor uncertainties, following the perscriptions of [arxiv:1607.03663](https://arxiv.org/pdf/1607.03663). At the moment, the code (L5_flavour_dep_corr branch) is adapted for the calculation of L5 flavor JEC and L2/L3 correction part is not tested.
 
 The main structure of the code:
 - `run_processor.py` runs the suplied coffea processor (e.g., `CoffeaJERCProcessor_L5.py`) and saves the results in .coffea files.
