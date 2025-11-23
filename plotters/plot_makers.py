@@ -192,6 +192,7 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
     fig, ax2 = plt.subplots();
     colors=plt.rcParams['axes.prop_cycle'].by_key()['color']
     if simple_depiction:
+        ## in a drawing move evrything by 0.2 to the left to make clear what JES is
         hep.histplot(histo.values(), histo.axes[0].edges-0.20, yerr=np.sqrt(histo.variances()), label=dataset_name, histtype='fill', alpha=0.6, color=colors[0])
         ax2.plot(f_xvals-0.2, fgaus, label='Gaussian fit', markersize=0, linewidth=2.2, color=colors[1])
         ax2.plot(f_xvals_full-0.2, fgaus_full, '--', markersize=0, linewidth=1.6, color=colors[1])
@@ -220,7 +221,7 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
             return (y - ay)/(by - ay)
         x1 = p2[1]-0.2
         x2 = 1.0
-        y1 = ylim[1]-yh*0.01
+        y1 = ylim[1]-yh*0.04
         xarrow1 = convert_pos(x1, ax2.get_xlim())
         dxarrow = convert_pos(x2, ax2.get_xlim()) - xarrow1
         yarrow = convert_pos(y1, ax2.get_ylim())
@@ -230,18 +231,30 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
         ax2.vlines(x1, 0-yh*0.07, ylim[1]+yh*0.12, linestyles='-',color="#7030A0",
             linewidth=2.2,)
         ax2.arrow(xarrow1, yarrow, dxarrow, 0, width=0.008, transform=ax2.transAxes, length_includes_head=True, color='#7030A0')
-        ax2.text(x2+0.05, ylim[1]-yh*0.13, "Mean:\nJES", color='#7030A0', fontsize=13, ha='left')
-        
+        # ax2.text(x2+0.05, ylim[1]-yh*0.13, "Mean:\nJES", color='#7030A0', fontsize=13, ha='left')
+        ax2.text(x2+0.05, ylim[1]-yh*0.17, "Vidējā vērtība:\n$\it{JES}$", color='#7030A0', fontsize=13, ha='left')
+
         ## plot JER
-        x2 = p2[1]-0.2+p2[2]*1.2
+        x2 = p2[1]-0.2-p2[2]*1.2
         y1 = max(fgaus)/2
         dxarrow = convert_pos(x2, ax2.get_xlim()) - xarrow1
         yarrow = convert_pos(y1, ax2.get_ylim())
         ax2.arrow(xarrow1+dxarrow*0.5, yarrow, dxarrow*0.5, 0, width=0.008, transform=ax2.transAxes, length_includes_head=True, color='#055551')
         ax2.arrow(xarrow1+dxarrow*0.5, yarrow, -dxarrow*0.5, 0, width=0.008, transform=ax2.transAxes, length_includes_head=True, color='#055551')
-        ax2.text(xarrow1-0.12, yarrow+0.03, "Width:\nJER", transform=ax2.transAxes, color='#055551', fontsize=13, ha='right')
-        ax2.legend(["data", "Gausian fit"])
-
+        # ax2.text(xarrow1-0.12, yarrow+0.03, "Width:\nJER", transform=ax2.transAxes, color='#055551', fontsize=13, ha='right')
+        ## for Latvian
+        ax2.text(xarrow1-0.12, yarrow+0.03, "Platums:\n$\it{JER}$", transform=ax2.transAxes, color='#055551', fontsize=13, ha='right')
+        # ax2.legend(["data", "Gausian fit"])
+        ax2.legend(["dati", "piedzīšanas līkne\n(Gausa sad.)"])
+        doLV = False
+        if doLV:
+            ax2.set_xlabel("Atbilde ($p_{T,reco}/p_{T,ptcl}$)")
+            ax2.set_ylabel("Notikumu skaits")
+            # Set to German locale to get comma decimal separater
+            import locale
+            locale.setlocale(locale.LC_NUMERIC, "de_DE")
+            # Tell matplotlib to use the locale we set above
+            plt.rcParams['axes.formatter.use_locale'] = True
         # ax2.text(x2-0.1, y1, "Width\nJER", transform=ax2.transAxes, color='green', fontsize=12, ha='right')
         # ax2.text(1, 1, "Width\nJER", transform=ax2.transAxes, color='green', fontsize=12, ha='right')
         # ax2.text(1, 1, "Width\nJER", color='green', fontsize=12, ha='right')
@@ -249,6 +262,8 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
         ax2.legend()
         if print_txt:
             hep_txt+=txt2print
+        hep.cms.label(hep_label, loc=0, data=False, ax=ax2, rlabel='')
+        hep.label.exp_text(text=hep_txt, loc=2)
 
 
     # #### for the poster
@@ -257,8 +272,6 @@ def plot_response_dist(histo, p2, fitlims, figName, dataset_name, hep_txt='', tx
     # ax2.text(1.10, 1.55e-5, r'median $\approx$ mean '+f'\n'+r'=$0.996\pm0.004$ ', fontsize=11, color='black')
 
     # hep.label.exp_text(text=hep_txt, loc=0)
-    hep.cms.label(hep_label, loc=0, data=False, ax=ax2, rlabel='')
-    hep.label.exp_text(text=hep_txt, loc=2)
     plt.savefig(figName+'.png', dpi=plt.rcParamsDefault['figure.dpi']);
     plt.savefig(figName+'.pdf', dpi=plt.rcParamsDefault['figure.dpi']);
     plt.show(); 
