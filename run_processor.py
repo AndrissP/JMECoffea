@@ -173,7 +173,7 @@ def run_processor(
     if test_run:
         Nfiles = 1
     
-    chunksize = 20000 #40000 #25000 
+    chunksize = 14000 #40000 #25000 
     ## hard to adjust the chunksize correctly. Without LHE flavor matching 50 000/ less for dilep (40k) hadronic (35k?) is usually fine, with LHE flavor, needs to decrease to 25k.  
     # print("chunksize used = ", chunksize)
     printout_tmp = f"chunksize used = {chunksize}"
@@ -377,18 +377,21 @@ def main():
     parser = optparse.OptionParser(usage)
     parser.add_option('-d', '--data',        dest='data_tag',    help='data tag from the available datasets',      default=None,        type='string')
     (opt, args) = parser.parse_args()
-    data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR', 
+    data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR',
+    ### overwrite data tags if this is simpler
+    data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"] 
     # data_tags = ['Herwig-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    data_tags = ['DY-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    data_tags = ['not_scaled_pion', 'scaled_pion', 'scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    # data_tags = ['DY-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    # data_tags = ['not_scaled_pion', 'scaled_pion', 'scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['Pythia-fullhad-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['QCD-Py'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    params =      {"run_comment": 'Testing the alpha cut options in terms of sorting in reco or gen pt', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
+    params =      {"run_comment": 'Testing comparisong with and withoug evtgen for Pythia/Herwig. Running on 2000toInf samples', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
                   "blacklist_sites":[], #, 'DY-MG-Her', 'QCD-MG-Her', 'QCD-Py'
                   "get_exact_endpoints":False,
+                  "add_tag": '',
                 #   "add_tag":'_200files',
                   "Nfiles": -1,
-                  "xrootdstr":'',
+                #   "xrootdstr":'',
                   
                   } 
     
@@ -397,12 +400,12 @@ def main():
     # dataset = 'Hadron_energy_fraction/fileNames/PFNanoQCD_MG_Her.txt'
     # dataset = 'fileNames/PFNanoTTToSemiLepPowHer.txt'
 
-    xrootdstr = 'file://'
-    def txt2filesls(dataset_name):
-        with open(dataset_name) as f:
-            rootfiles = f.read().split()
-            fileslist = [xrootdstr + file for file in rootfiles]
-        return fileslist
+    # xrootdstr = 'file://'
+    # def txt2filesls(dataset_name):
+    #     with open(dataset_name) as f:
+    #         rootfiles = f.read().split()
+    #         fileslist = [xrootdstr + file for file in rootfiles]
+    #     return fileslist
     # fileslist = txt2filesls(dataset)[:Nfiles]
     for data_tag in data_tags:
         run_processor(data_tag=data_tag, test_run=False, executor='dask', **params)

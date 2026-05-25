@@ -2,7 +2,7 @@
 import awkward as ak
 import numpy as np
 import numba as nb
-from memory_profiler import profile
+# from memory_profiler import profile
 @nb.njit
 def is_b_had(pdgId, builder):
     ''' numba implementation for a function that checks if a particle is a B hadron according to its pdgId

@@ -244,8 +244,11 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
                                      + '\n'+r'Median = {0:0.3f}$\pm${1:0.3f}'.format(median, medianstd)
                                      + '\n'+r'$\chi^2/ndof$ = {0:0.2g}/{1:0.0f}'.format(chi2, Ndof)
                                      + '\n'+r'Neff = {0:0.3g}'.format(Neff))
+                    
+                    # txt2print = ('')
+                    # hep_txt=''
                     plot_makers.plot_response_dist(histo, p2, fitlims,
-                                       figName, dataset_name=legend_label, hep_txt=hep_txt, txt2print=txt2print, print_txt=True)              
+                                       figName, dataset_name=legend_label, hep_txt=hep_txt, txt2print=txt2print, print_txt=True, simple_depiction=False)              
                     if not scaled_hist==None:
                         plot_makers.plot_response_dist_stack(h_stack, p2, fitlims,
                                                  figName+'stack', hep_txt=hep_txt, print_txt=False )
@@ -354,13 +357,13 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     print("All done. Congrats!")
   
 if __name__ == "__main__":
-    data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
+    # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
-    # data_tags = ['Herwig-TTBAR'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+    data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"]  #['QCD-MG-Py'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
     # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
 
-    # data_tags = ['QCD-Py_noiso'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
-    # data_tags = ['QCD-Py' ] #Pythia-semilep-TTBAR
+    # data_tags = ['QCD-Py'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
+    # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR'] #Pythia-semilep-TTBAR
 
     config = {
          ################ Parameters of the run and switches  #########################
@@ -373,7 +376,7 @@ if __name__ == "__main__":
         ### HCalPart: bin in HCal sectors, CaloTowers: the standard JERC binning,
         ### CoarseCalo: like 'CaloTowers' but many bins united; onebin: combine all eta bins
         ### Preprocessing always done in CaloTowers. For the reponse distributions, the bins can be merged.
-        "eta_binning"         : "Summer20Flavor",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
+        "eta_binning"         : "HCalPart",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
         "pt_binning"          : "MC_truth", ### MC_truth, Uncert, Coarse, onebin
         "sum_neg_pos_eta_bool": True,  ### if combining the positive and negative eta bins
         "tag_Lx" : '_L5',                 ### L5 or L23, but L23 not supported since ages.
@@ -392,12 +395,13 @@ if __name__ == "__main__":
 
         ### Define which flavors should be fit
         # "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        # "flavors":                ['b', 'g'],
+        # "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
         # "flavors": ['b_gluon_splitting', "b_prompt", 'c_gluon_splitting', "c_prompt", 'b', 'c'],
 
         ### None if all the pt bins should be fit, otherwise a list of two numbers for the range of pt bins to fit, or just one number for a single pt bin
         # "pt_to_fit": None,
-        # "pt_to_fit": [30],
+        # "pt_to_fit": [100,5000],
         # "eta_to_fit": [0],
     }
 

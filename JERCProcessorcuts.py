@@ -8,7 +8,7 @@ Author(s): Andris Potrebko (RTU)
 
 import awkward as ak
 import numpy as np
-from memory_profiler import profile
+# from memory_profiler import profile
 from LHE_flavour import get_LHE_flavour, get_LHE_flavour2
 
 ### input numbers

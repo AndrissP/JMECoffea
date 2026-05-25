@@ -19,7 +19,7 @@ def find_eta_str(plotvspt, binval, correction_fnc, name):
         if corr_bin_idx==len(corr_etabins):
             corr_bin_idx-=1
         if 'Run 1' in name:
-            eta_str = ', \n'+r' {:0.1f}$<|\eta|<${:0.1f}'.format(corr_etabins[corr_bin_idx], corr_etabins[corr_bin_idx+1])
+            eta_str = r', {:0.1f}$<|\eta|<${:0.1f}'.format(corr_etabins[corr_bin_idx], corr_etabins[corr_bin_idx+1])
     return eta_str
 
 def make_comparison_plot(data_dict,
@@ -311,6 +311,13 @@ def make_comparison_plot(data_dict,
     # hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
     flav_txt = flav.replace('_', ' ')
     hep.label.exp_text(text=f'{bins.idx2plot_str(binidx)}\n{flav_txt} jets'+extra_text, loc=2, ax=ax)
+    
+    # Add white box underneath the left legend but on top of the plot lines
+    from matplotlib.patches import Rectangle
+    rect = Rectangle((0.01, 0.55), 0.20, 0.25, transform=ax.transAxes, 
+                     facecolor='white', edgecolor='none', alpha=1.0, zorder=2)
+    ax.add_patch(rect)
+    
     fig_name = dir_name2+'/'+run_name+"_"+flav+'_'+eta_string
     print("Saving plot for eta = ", eta_string)
     print("Saving plot with the name = ", fig_name+".pdf / .png")

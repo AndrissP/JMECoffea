@@ -447,10 +447,12 @@ def legend_str_to_filename(legend_str):
 def get_xsec_dict(data_tag, dataset_dictionary):
     ''' Load a text file with cross sections and file names as a dictionary `xsec_dict`.
     '''
+    ### data_tag is build as <dataset_name>_<other_tags>, e.g., 'QCD-Py_weights' or 'QCD-Py'.
     ### if the 'data_tag' in the root contains any of the tags in `dataset_dictionary`, select this tag,
-    ### e.g.,'QCD-Py_weights' contains 'QCD-Py', so select xsec from 'QCD-Py'.
+    ### e.g., in cases above select xsec from 'QCD-Py'.
     keys = np.array(list(dataset_dictionary.keys()))
-    matching_keys =  keys[np.where([ key in data_tag[:len(key)] for key in keys])[0]]
+    matching_keys =  keys[np.where([ key == data_tag or key+'_' in data_tag[:len(key)+1]  for key in keys])[0]]
+    print("matching keys: ", matching_keys)
     if len(matching_keys)>1:
         raise ValueError(f"More than one key from the dataset dictionary matches the given data_tag = {data_tag}")
     elif len(matching_keys)==1:

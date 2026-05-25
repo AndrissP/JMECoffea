@@ -44,7 +44,7 @@ processor_config = {
     "use_gen_weights": False,
     "use_pu_weights": True,
     "split_ISR_FSR_gluons": False,  # based on if parton flavor overlaps with LHE flavor for some samples it can be possible to split FSR and ISR
-    "split_gluon_split_bs": True,
-    "split_gluon_split_cs": True,
+    "split_gluon_split_bs": False,
+    "split_gluon_split_cs": False,
     # ... Add more cuts and parameters as needed
 }

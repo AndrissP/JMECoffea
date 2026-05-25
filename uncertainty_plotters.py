@@ -891,7 +891,7 @@ class HandlerLine2D_numpoints(HandlerLine2D):
 
         return legline, legline_marker
 
-def plot_uncertainty_antiflav(ptvals, etavals, additional_uncertainty_curves, uncertainties, ptoretastr, flavors, plotvspt=False):
+def plot_uncertainty_antiflav(ptvals, etavals, additional_uncertainty_curves, old_unc, ptoretastr, flavors, plotvspt=False, plot_old=False, ylims=None):
     addc = additional_uncertainty_curves
     fig, ax = plt.subplots()
 
@@ -911,11 +911,17 @@ def plot_uncertainty_antiflav(ptvals, etavals, additional_uncertainty_curves, un
         else:
             flav_labs.append(line[0])
     
+    if plot_old:
+        assert ('b' in unc_old), "Only b jet uncertainty is available for old curves"
+        line_old = ax.plot(xvals, old_unc['b'], markersize=0, linewidth=1.2, linestyle=':',
+                **color_scheme['b'])
+
     ax.hlines(0, ax.get_xlim()[0], ax.get_xlim()[1],color="gray",
         linewidth=1, alpha=0.4)
 
     smaller_spacing = plt.rcParams['legend.labelspacing']*0.45
     larger_spacing = plt.rcParams['legend.labelspacing']*2.0
+    legend_old = ax.legend(handles=line_old, loc='upper right', bbox_to_anchor=(0.26, 0.6)) if plot_old else None
     legend1 = ax.legend(handles=antiflav_labs, loc='upper right', bbox_to_anchor=(0.73, 0.978), handlelength=1.5, handleheight=1.55, labelspacing = smaller_spacing)
     leg2 = ax.legend(handles=flav_labs, ncol=1, loc='upper left', bbox_to_anchor=(0.69, 0.974), handlelength=0.9, handleheight=0.3, labelspacing = larger_spacing)#, title='assembled\nfrom QCD', title_fontsize=10)
     ax.add_artist(legend1)
@@ -925,7 +931,10 @@ def plot_uncertainty_antiflav(ptvals, etavals, additional_uncertainty_curves, un
     ax.set_xlabel(xlabel);
     ylabel = 'JEC uncertainty (%)'
     ax.set_ylabel(ylabel);
-    ylim_old = ax.get_ylim()
+    if ylims is not None:
+        ylim_old = ylims
+    else:
+        ylim_old = ax.get_ylim()
 
     if plotvspt:
         ax.set_xscale('log')
@@ -1211,117 +1220,3 @@ def plot_Rref(ptvals, Rdijet0, Rdijet, DY200, Rtot, Rtot_smooth, jeteta_bins, et
     plt.show()
     
         # ax.plot(mov,markersize=0, label="After smoothing")
-
-
-# def plot_all_flavor_comparison(num_sample_name,
-#                          denom_sample_name, jeteta_bins, ptbins_c, eta_binning_str, fit_samp='J', etaidx=0):
-#     ''' Put ratio plots of many all flavors at the same place. Reproduce Fig. 31 in arXiv:1607.03663
-#     '''
-
-#     inverse=False   #True if plot corrections, False if plot responses
-#     use_recopt=False   #True if use reco pt, False if use gen pt
-#     flavors = ['g', 'q' ,'c', 'b'] #, 'unmatched']
-    
-#     mean_name = "Median"
-#     mean_name_std = mean_name+'Std'
-#     start = np.searchsorted(ptbins, 15, side='left')
-# #     etaidx = np.searchsorted(jeteta_bins_abs, 0, side='left')
-    
-#     yvals = np.array([read_data2(mean_name, num_sample_name, flav, eta_binning_str)[start:,etaidx] for flav in flavors])
-#     stds  = np.array([read_data2(mean_name_std, num_sample_name, flav, eta_binning_str)[start:,etaidx] for flav in flavors])
-#     xvals = np.array([read_data2("MeanRecoPt", num_sample_name, flav, eta_binning_str)[start:,etaidx] for flav in flavors])
-    
-#     yvals_d = np.array([read_data2(mean_name, denom_sample_name, flav, eta_binning_str)[start:,etaidx] for flav in flavors])
-#     stds_d  = np.array([read_data2(mean_name_std, denom_sample_name, flav, eta_binning_str)[start:,etaidx] for flav in flavors])
-#     xvals_d = np.array([read_data2("MeanRecoPt", denom_sample_name, flav, eta_binning_str)[start:,etaidx] for flav in flavors])
-# #     print('etaidx = ', etaidx)
-
-#     corr_loc_Sum20_Py = [f"* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs{eta_binning_str}.txt"]
-#     corr_loc_Sum20_Her = [f"* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_Her{eta_binning_str}.txt"]
-#     ext = extractor()
-#     ext.add_weight_sets(corr_loc_Sum20_Py+corr_loc_Sum20_Her)
-#     ext.finalize()
-#     evaluator = ext.make_evaluator()
-        
-#     yvals[(yvals==0) | (np.abs(yvals)==np.inf)] = np.nan
-#     yvals_d[(yvals_d==0) | (np.abs(yvals_d)==np.inf)] = np.nan
-    
-#     ratios = yvals/yvals_d
-#     ratio_unc = ((stds / yvals_d)**2 + (yvals/yvals_d**2 * stds_d)**2)**(1/2)
-    
-#     if not use_recopt:
-#         xvals = ptbins_c[start:]    
-        
-#     etaval = jeteta_bins.centres[etaidx]
-#     xvals_cont = np.geomspace(np.min(xvals), np.max(xvals), 100)
-#     yvals_cont = np.array([evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_Her{eta_binning_str}_{flav}{fit_samp}'](np.array([etaval]),xvals_cont)
-#                            for flav in flavors])
-#     yvals_cont_d = np.array([evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs{eta_binning_str}_{flav}{fit_samp}'](np.array([etaval]),xvals_cont)
-#                        for flav in flavors])
-#     if inverse==True:
-#         yvals = 1/yvals
-#         yvals_d = 1/yvals_d
-#         ### Error propagation
-#         stds = yvals**2*stds
-#         stds_d = yvals_d**2*stds_d
-        
-#     if inverse==False:
-#         yvals_cont = 1/yvals_cont
-#         yvals_cont_d = 1/yvals_cont_d
-    
-    
-#     fig, ax = plt.subplots()
-#     for axis in [ax.xaxis, ax.yaxis]:
-#         axis.set_minor_locator(mpl.ticker.AutoMinorLocator())
-        
-# #     assert False
-#     for yval, std, flav in zip(ratios, ratio_unc, flavors):
-#         ax.errorbar(xvals, yval, yerr=std,
-#                     linestyle="none", label=legend_dict[flav], **color_scheme[flav],
-#                     capsize=1.6, capthick=0.7, linewidth=1.0)
-# #         assert not lab == 'unmatched'
-       
-#     ratios_cont = yvals_cont/yvals_cont_d
-# #     ax.set_prop_cycle(None)
-#     for yval, flav in zip(ratios_cont, flavors):
-#         ax.plot(xvals_cont, yval, markersize=0, **color_scheme[flav])
-    
-#     ax.set_xscale('log')
-#     xlims = ax.get_xlim()
-    
-#     ax.hlines(1,1, 10000, linestyles='--',color="black", linewidth=1,)
-#     ######################## Calculate resonable limits excluding the few points with insane errors
-#     recalculate_limits=True
-#     if recalculate_limits:
-#         yerr_norm = np.concatenate(ratio_unc)
-#         y_norm = np.concatenate(ratios)
-#         norm_pos = (yerr_norm<0.01) &  (yerr_norm != np.inf) & (y_norm>-0.1)  
-#         if ~np.any(norm_pos):
-#             print("Cannot determine ylimits")
-#             norm_pos = np.ones(len(yerr_norm), dtype=int)
-#             raise Exception("Cannot determine ylimits")
-#         left_lim = np.min((y_norm-yerr_norm)[norm_pos])
-#         right_lim = np.max((yerr_norm+y_norm)[norm_pos])
-#         lim_pad = (right_lim - left_lim)/20
-#         ax.set_ylim(left_lim-lim_pad, right_lim+lim_pad*8)
-    
-#     xlabel = r'$p_{T,reco}$ (GeV)' if use_recopt else r'$p_{T,ptcl}$ (GeV)'
-#     ax.set_xlabel(xlabel);
-#     ylab_pre = 'R(Her7)/R(Py8)' 
-#     ylabel = r' (correction)' if inverse else r' (median response)'
-#     ax.set_ylabel(ylab_pre+ylabel);
-    
-#     ax.set_xticks([10, 20, 50, 100, 500, 1000, 5000])
-#     ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
-#     leg1 = ax.legend(ncol=1)
-#     ax.set_xlim(xlims)
-    
-#     title_name = 'QCD' if fit_samp=='J' else 'ttbar'
-#     hep.label.exp_text(text=jeteta_bins.idx2plot_str(eta_idx)+f', {title_name}', loc=0)
-    
-#     etastr = jeteta_bins.idx2str(eta_idx)
-#     fig_name = f'fig/uncertainty/Pythia_Herwig_ratio_{etastr}_using_{fit_samp}_fits'
-#     print("Saving plot with the name = ", fig_name)
-#     plt.savefig(fig_name+'.pdf');
-#     plt.savefig(fig_name+'.png');
-#     plt.show();
