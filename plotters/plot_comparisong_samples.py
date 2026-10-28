@@ -102,7 +102,7 @@ def main():
     # flavors = ['c_prompt', 'c_gluon_splitting', 'c', 'b_prompt', 'b_gluon_splitting', 'b', 'ud', 's', 'all', 'q', 'unmatched', 'd', 'u']
     # flavors = ['b', 'c', 'g', 'ud', 's', 'all', 'q', 'unmatched', 'd', 'u']
     plotvspt = True
-    flavors = ['b', 'g']
+    flavors = ['b', 'g', 'q', 'c']
 
     eta_binning  = "HCalPart"  ### HCalPart, JERC, CoarseCalo, CaloTowers, Summer20Flavor, onebin;
     eta_binning_str = '_'+eta_binning if eta_binning != "HCalPart" else ''
@@ -196,7 +196,7 @@ def main():
             make_comparison_plot(data, 
                             {},
                             etabins, ptbins,
-                            binidx=k, flav=flav, pt_min=15, ratio_name='ratio,\nHer7/Py8', inverse=False, plotvspt=plotvspt, ratio_ylim=[0.985, 1.015], extra_text='')
+                            binidx=k, flav=flav, pt_min=15, ratio_name='ratio,\nHer7/Py8', inverse=False, plotvspt=plotvspt, ratio_ylim=[0.99, 1.01], extra_text='')
 
     
     # etabins_abs = etabins[(len(etabins)-1)//2:]

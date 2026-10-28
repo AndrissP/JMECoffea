@@ -2816,3 +2816,179 @@ chunksize used = 20000Running on the number of files: -1
 
 Config parameters:
 {'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_263
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on dask.
+The data tag "QCD-Py" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD20UL18_JMENano.txt" will be used. 
+chunksize used = 20000Running on the number of files: 1
+ Job with the full tag _L5_QCD-Py_noiso_test
+ Outname = out/CoffeaJERCOutputs_L5_QCD-Py_noiso_test.coffea 
+
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_264
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "QCD-Py" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD20UL18_JMENano.txt" will be used. 
+chunksize used = 20000Running on the number of files: -1
+ Job with the full tag _L5_QCD-Py_noiso
+ Outname = out/CoffeaJERCOutputs_L5_QCD-Py_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240707_192038
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_265
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "DY-MG-Py" found in the dataset_dictionary. The dataset with the path to file names "fileNames/DYJets_MG-Py.txt" will be used. 
+chunksize used = 20000Running on the number of files: -1
+ Job with the full tag _L5_DY-MG-Py_noiso
+ Outname = out/CoffeaJERCOutputs_L5_DY-MG-Py_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240707_193401
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_266
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "QCD-MG-Her" found in the dataset_dictionary. The dataset with the path to cross-sections fileNames/QCD_Herwig_20UL18/xsecs_QCD_Herwig_corrected.txt will be used. 
+chunksize used = 20000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Her_noiso
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Her_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240708_070222
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_267
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "DY-MG-Her" found in the dataset_dictionary. The dataset with the path to file names "fileNames/DYJets_MG-Her.txt" will be used. 
+chunksize used = 20000Running on the number of files: -1
+ Job with the full tag _L5_DY-MG-Her_noiso
+ Outname = out/CoffeaJERCOutputs_L5_DY-MG-Her_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240708_071603
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_268
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "Herwig-TTBAR" found in the dataset_dictionary. The dataset with the path to file names "fileNames/TT20UL18_JMENano_Herwig.txt" will be used. 
+chunksize used = 20000Running on the number of files: -1
+ Job with the full tag _L5_Herwig-TTBAR_noiso
+ Outname = out/CoffeaJERCOutputs_L5_Herwig-TTBAR_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240708_072813
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_269
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "QCD-MG-Py" found in the dataset_dictionary. The dataset with the path to cross-sections fileNames/QCD_MG_Py8_20UL18/xsecs_QCD_MG_py8.txt will be used. 
+chunksize used = 20000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py_noiso
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240710_132559
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_270
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "QCD-MG-Py" found in the dataset_dictionary. The dataset with the path to cross-sections fileNames/QCD_MG_Py8_20UL18/xsecs_QCD_MG_py8.txt will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py_noiso
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240712_153905
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_271
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "QCD-MG-Py" found in the dataset_dictionary. The dataset with the path to cross-sections fileNames/QCD_MG_Py8_20UL18/xsecs_QCD_MG_py8.txt will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py_noiso
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240714_174530
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_272
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "Pythia-semilep-TTBAR" found in the dataset_dictionary. The dataset with the path to file names "fileNames/TTBAR_Pythia_20UL18/TTToSemi20UL18_JMENano.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_Pythia-semilep-TTBAR_noiso
+ Outname = out/CoffeaJERCOutputs_L5_Pythia-semilep-TTBAR_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240714_205327
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_273
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "Pythia-dilep-TTBAR" found in the dataset_dictionary. The dataset with the path to file names "fileNames/TTBAR_Pythia_20UL18/TTToDilep20UL18_JMENano.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_Pythia-dilep-TTBAR_noiso
+ Outname = out/CoffeaJERCOutputs_L5_Pythia-dilep-TTBAR_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240714_215830
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_274
+Run comment: Testing the alpha cut options in terms of sorting in reco or gen pt
+Processor CoffeaJERCProcessor_L5 will be run on condor.
+The data tag "Pythia-fullhad-TTBAR" found in the dataset_dictionary. The dataset with the path to file names "fileNames/TTBAR_Pythia_20UL18/TTToHad20UL18_JMENano.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_Pythia-fullhad-TTBAR_noiso
+ Outname = out/CoffeaJERCOutputs_L5_Pythia-fullhad-TTBAR_noiso.coffea 
+condor log will be saved under /eos/home-a/anpotreb/condor_coffea_log/condor_coffea_log_240714_222533
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': True, 'split_gluon_split_cs': True}
+
+Run_index_275
+Run comment: Testing comparisong with and withoug evtgen for Pythia/Herwig. Running on 2000toInf samples
+Processor CoffeaJERCProcessor_L5 will be run on dask.
+The data tag "QCD-MG-Her-2000toInf" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_Herwig_20UL18/QCD_HT2000toInf_20UL18_JMENano_Herwig.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Her-2000toInf
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Her-2000toInf.coffea 
+
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_276
+Run comment: Testing comparisong with and withoug evtgen for Pythia/Herwig. Running on 2000toInf samples
+Processor CoffeaJERCProcessor_L5 will be run on dask.
+The data tag "QCD-MG-Py-2000toInf" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_MG_Py8_20UL18/HT2000toInf.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py-2000toInf
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py-2000toInf.coffea 
+
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_277
+Run comment: Testing comparisong with and withoug evtgen for Pythia/Herwig. Running on 2000toInf samples
+Processor CoffeaJERCProcessor_L5 will be run on dask.
+The data tag "QCD-MG-Py-evtgen" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_MG_Py_2000toInf_evtgen.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py-evtgen
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py-evtgen.coffea 
+
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_278
+Run comment: Testing comparisong with and withoug evtgen for Pythia/Herwig. Running on 2000toInf samples
+Processor CoffeaJERCProcessor_L5 will be run on dask.
+The data tag "QCD-MG-Py-evtgen" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_MG_Py_2000toInf_evtgen.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py-evtgen
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py-evtgen.coffea 
+
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}

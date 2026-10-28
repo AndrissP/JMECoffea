@@ -6,15 +6,16 @@ import matplotlib as mpl
 
 import os
 pltStyle('hep')
-plt.rcParams['font.size'] = plt.rcParams['font.size']/0.98
+plt.rcParams['font.size'] = plt.rcParams['font.size']
+plt.rcParams['figure.subplot.right'] = 0.96
 from coffea import util
 from helpers import get_xsec_dict, hist_div, sum_subhist
 from fileNames.available_datasets import dataset_dictionary
 
 
 
-HT_Py = util.load('out/draw_HT_spectrum_L5_QCD-MG-Py.coffea')
-HT_Her = util.load('out/draw_HT_spectrum_L5_QCD-MG-Her.coffea')
+# HT_Py = util.load('out/draw_HT_spectrum_L5_QCD-MG-Py.coffea')
+# HT_Her = util.load('out/draw_HT_spectrum_L5_QCD-MG-Her.coffea')
 
 hists_HT_merged = {}
 hists_HT_theory_merged = {}
@@ -37,13 +38,13 @@ for tag in ['QCD-MG-Her', 'QCD-MG-Py']:
     h_HT        = sum_subhist(hists, 'h_HT', scale_factors)
 
     hists_HT_merged[tag] = h_HT
-    hists_HT_theory_merged[tag+'theory'] = h_HT_theory
+    hists_HT_theory_merged[tag+'-theory'] = h_HT_theory
     legend_labels.append(legend_label)
 
 
 # assert False
 
-def plot_spectra(histdict, legend_labels, saveplot=True):
+def plot_spectra(histdict, legend_labels, saveplot=True, rationame='ratio'):
 
     samples = list(histdict.keys())
     fig = plt.figure()
@@ -102,11 +103,11 @@ def plot_spectra(histdict, legend_labels, saveplot=True):
         
     ax2.hlines(1,-10, 10000, linestyles='--',color="black", 
        linewidth=1,)
-    ax2.set_ylabel("ratio")
+    ax2.set_ylabel(rationame)
     ax2.set_xlabel('$H_T$ (GeV)')
     ax.set_ylabel("$dN/dH_{T}$ (GeV)")
 #     hep.label.exp_text(text=f'{bins.idx2plot_str(eta_idx)}, {flav} jets', loc=2, ax=ax)
-    hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
+    hep.cms.label("Private work", loc=0, data=False, ax=ax)
     #To make the minor ticks appear and be without labels even if it gets busy with major ticks.
     ax.yaxis.set_minor_locator(mpl.ticker.LogLocator(base=10, numticks=20))  #numticks - the maximum number of ticks. 
     ax.yaxis.set_minor_formatter(mpl.ticker.NullFormatter())
@@ -124,4 +125,4 @@ def plot_spectra(histdict, legend_labels, saveplot=True):
 1;
 
 plot_spectra(hists_HT_merged, legend_labels)
-plot_spectra(hists_HT_theory_merged, legend_labels)
+plot_spectra(hists_HT_theory_merged, legend_labels, rationame='ratio\nPy/Her')

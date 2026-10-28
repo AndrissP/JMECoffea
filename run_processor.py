@@ -380,6 +380,7 @@ def main():
     data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR',
     ### overwrite data tags if this is simpler
     data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"] 
+    data_tags = ["QCD-MG-Py-evtgen"] 
     # data_tags = ['Herwig-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['DY-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['not_scaled_pion', 'scaled_pion', 'scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']

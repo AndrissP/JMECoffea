@@ -55,7 +55,7 @@ sample_plot = {}
 hists_rebinned_dict = {}
 Neffs = {}
 
-def plot_spectra(histdict, labels, flav, etaidx, jeteta_bins, ptbins, saveplot=True, plotvspt=True):
+def plot_spectra(histdict, labels, flav, etaidx, jeteta_bins, ptbins, saveplot=True, plotvspt=True, rationame='ratio'):
     samples = list(histdict.keys())
     xbins = ptbins if plotvspt else jeteta_bins
     bins = jeteta_bins if plotvspt else ptbins
@@ -131,11 +131,11 @@ def plot_spectra(histdict, labels, flav, etaidx, jeteta_bins, ptbins, saveplot=T
         
     ax2.hlines(1,-10, 10000, linestyles='--',color="black", 
        linewidth=1,)
-    ax2.set_ylabel("ratio")
+    ax2.set_ylabel(rationame)
     ax2.set_xlabel('$p_{T,ptcl}$ (GeV)') if plotvspt else ax2.set_xlabel('$|\eta|$') 
     ax.set_ylabel("$dN/dp_{T,ptcl}$ (GeV)") if plotvspt else ax.set_ylabel("$dN/d|\eta|$")
 #     hep.label.exp_text(text=f'{bins.idx2plot_str(eta_idx)}, {flav} jets', loc=2, ax=ax)
-    hep.cms.label("Preliminary", loc=0, data=False, ax=ax)
+    hep.cms.label("Private work", loc=0, data=False, ax=ax)
     
     if saveplot:
         if not os.path.exists("fig/pt_spectra"):
@@ -200,4 +200,4 @@ for sample in ['QCD-Py_genwt_test', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py']:
 
 ### to make
 hists_rebinned_dict['QCD-MG-Her'] = hist_mult(hists_rebinned_dict['QCD-MG-Her'], Neffs['QCD-MG-Py']/Neffs['QCD-MG-Her'])
-plot_spectra(hists_rebinned_dict, legend_labels, 'all', eta_idx, jeteta_bins, pt_bins, saveplot=True, plotvspt=True)
+plot_spectra(hists_rebinned_dict, legend_labels, 'all', eta_idx, jeteta_bins, pt_bins, saveplot=True, plotvspt=True, rationame='ratio\n*/Py8 weights')
