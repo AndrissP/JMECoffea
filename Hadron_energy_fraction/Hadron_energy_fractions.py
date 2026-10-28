@@ -3,7 +3,7 @@
 ### Hadron_energy_fractions.py
 ### File automatically converted using ConvertJupyterToPy.ipynb from Hadron_energy_fractions.ipynb
 ### No comments or formatting is preserved by the transfer.
-def main():
+def main(dataset = 'fileNames/PFNanoQCD_MG_Py.txt', outname = 'HadronEfractions_QCD_resp_Py.coffea'):
     
     import awkward as ak
     import numpy as np
@@ -132,7 +132,7 @@ def main():
     # jetpt_ax = hist.axis.Regular(30, 1, 500, overflow=False, underflow=False, name="jet_pt")
     # jeta_eta_ax = hist.axis.Variable(np.array([0, 1.3, 2.5, 3, 5]), overflow=False,
     #                                  underflow=False, name="jet_eta")
-    had_pt_ax = hist.axis.Regular(10, 1, 20, overflow=False, underflow=False, name="had_pt")
+    had_pt_ax = hist.axis.Regular(10, 1, 20, overflow=True, underflow=True, name="had_pt")
     h = Hist(particle_ax, flavour_ax, storage="weight")
     
     # ### Reco gen matching for samples (e.g Herwig) where gen jets do not contain partonFlavor (all 0) but reco jets do
@@ -140,7 +140,7 @@ def main():
     # ### Question: Why do I reco the gen matching instead of using events.jet.matchedGen?
     
     ### To check the response
-    resp_hist = Hist.new.Reg(100, 0, 5, overflow=True, underflow=True, name="response").Double()
+    # resp_hist = Hist.new.Reg(100, 0.5, 1.5, overflow=True, underflow=True, name="response").Double()
     
     from coffea import processor
     class Processor(processor.ProcessorABC):
@@ -153,14 +153,17 @@ def main():
         
         def process(self, events):
             particle_ax = hist.axis.IntCategory(nums, name="had_type")
-            flavour_ax = hist.axis.IntCategory([5, -5, 4, -4, 3, -3, 2, -2, 1, -1, 21, 0, -999], name="parton_flavour")
+            # flavour_ax = hist.axis.IntCategory([5, -5, 4, -4, 3, -3, 2, -2, 1, -1, 21, 0, -999], name="parton_flavour")
             flavour_ax = hist.axis.IntCategory([5, 4, 3, 2, 1, 21, 0, -999], name="parton_flavour")
-    
+            response_ax = hist.axis.Regular(50, 0.5, 1.5, overflow=True, underflow=True, name="response")
+            pt_frac_ax = hist.axis.Regular(100, 0, 1, overflow=True, underflow=True, name="pt_frac")
+            
             # jetpt_ax = hist.axis.Regular(30, 1, 500, overflow=False, underflow=False, name="jet_pt")
             # jeta_eta_ax = hist.axis.Variable(np.array([0, 1.3, 2.5, 3, 5]), overflow=False,
             #                                  underflow=False, name="jet_eta")
             had_pt_ax = hist.axis.Regular(10, 1, 20, overflow=False, underflow=False, name="had_pt")
             h = Hist(particle_ax, flavour_ax, storage="weight")
+            h2 = Hist(particle_ax, flavour_ax, response_ax, pt_frac_ax)
             
             gen_jets = events.GenJet
             jets = events.Jet
@@ -169,61 +172,75 @@ def main():
             jets = jets[jet_gen_match_mask]
     
             # in the case of Herwig, the gen jets have empty partonFlavour, so it has to be rematched
-            toJetIdx = ak.zeros_like(gen_jets.partonFlavour)
+            # toJetIdx = ak.zeros_like(gen_jets.partonFlavour)
             genjet_shape = ak.num(gen_jets.partonFlavour)
-            jet_shape = ak.num(jets.partonFlavour)
+            # jet_shape = ak.num(jets.partonFlavour)
             partonFlavour_flat = ak.flatten(ak.zeros_like(gen_jets.partonFlavour)).to_numpy()
             toJetIdx_flat = ak.flatten(ak.ones_like(gen_jets.partonFlavour)*-1).to_numpy()
     
             genjet_shapecum = np.concatenate([[0], np.cumsum(genjet_shape)[:-1]])
-            jet_shapecum = np.concatenate([[0], np.cumsum(jet_shape)[:-1]])
+            # jet_shapecum = np.concatenate([[0], np.cumsum(jet_shape)[:-1]])
             genjetidx = ak.flatten(genjet_shapecum+jets.genJetIdx).to_numpy()
             partonFlavour_flat[genjetidx] = ak.flatten(jets.partonFlavour).to_numpy()
             toJetIdx_flat[genjetidx] = ak.flatten(np.argsort(jets.genJetIdx) ).to_numpy()
             gen_jets["partonFlavour2"] = ak.unflatten(partonFlavour_flat, genjet_shape)
             gen_jets["jetIdx"] = ak.unflatten(toJetIdx_flat, genjet_shape) # index of the matched reco jet
-    
+            ### end of rematching
+
+            ### some samples have genCandsIdx, some have pFCandsIdx
             if 'genCandsIdx' in events.GenJetCands.fields:
                 genCand = events.GenCands[events.GenJetCands.genCandsIdx]
             else:
                 genCand = events.GenCands[events.GenJetCands.pFCandsIdx]
             gen_jets_vCand = gen_jets[events.GenJetCands.jetIdx]
+
+            ### remove events where there are no jets as then selection crashes
+            has_jets = ak.num(jets)>0
+            jets = jets[has_jets]
+            gen_jets_vCand = gen_jets_vCand[has_jets]
+            gen_jets = gen_jets[has_jets]
+            genCand = genCand[has_jets]
+
             jetpt = jets[gen_jets_vCand.jetIdx].pt
     
             has_mathed_reco = gen_jets_vCand["jetIdx"]>-1
             ptmask = (gen_jets_vCand.pt>400) & (gen_jets_vCand.pt<1000)
             ### if masking jets with a good response and bad response
-            funnyjet_mask = jetpt>gen_jets_vCand.pt*1.1
-            goodjet_mask = (jetpt<gen_jets_vCand.pt*1.1) & (jetpt>gen_jets_vCand.pt*0.9)
+            response = jetpt/gen_jets_vCand.pt
+            # funnyjet_mask = jetpt>gen_jets_vCand.pt*1.1
+            # goodjet_mask = (jetpt<gen_jets_vCand.pt*1.1) & (jetpt>gen_jets_vCand.pt*0.9)
     
-            total_mask = has_mathed_reco & ptmask & goodjet_mask # funnyjet_mask #
+            total_mask = has_mathed_reco & ptmask # & goodjet_mask # funnyjet_mask #
             gen_jets_vCand = gen_jets_vCand[total_mask]
             genCand = genCand[total_mask]
             jetpt = jetpt[total_mask]
+            response = response[total_mask]
+            had_en_frac = genCand.pt/jetpt
     #         resp_hist.fill(ak.flatten(jetpt/gen_jets_vCand.pt).to_numpy())
     
-            h.fill(ak.flatten(genCand.pdgId), ak.flatten(np.abs(gen_jets_vCand.partonFlavour2)), weight=ak.flatten(genCand.pt));
-        
-            return h
+            # h.fill(ak.flatten(genCand.pdgId), ak.flatten(np.abs(gen_jets_vCand.partonFlavour2)), weight=ak.flatten(genCand.pt));
+            h2.fill(ak.flatten(genCand.pdgId), ak.flatten(np.abs(gen_jets_vCand.partonFlavour2)), ak.flatten(response), ak.flatten(had_en_frac));
+
+            return h2
         
         def postprocess(self, accumulator):
             return accumulator
     
-    xrootdstr = 'file:///eos/cms/store/group/cmst3/group/top/TOP21009/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/mc_2016_ULPreVFP/230330_162057/0000/'
+    # xrootdstr = 'file:///eos/cms/store/group/cmst3/group/top/TOP21009/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/mc_2016_ULPreVFP/230330_162057/0000/'
+    xrootdstr = 'file:///'
     def txt2filesls(dataset_name):
         with open(dataset_name) as f:
             rootfiles = f.read().split()
             fileslist = [xrootdstr + file for file in rootfiles]
         return fileslist
     
-    Nfiles = 100
-    dataset = 'fileNames/PFNanoTTToSemiLepPowPy.txt'
+    Nfiles = -1
     fileslist = txt2filesls(dataset)[:Nfiles]
     filesets = {'dataset1': {"files": fileslist, "metadata": {"xsec": 1}}}
     
     UsingDaskExecutor = True
     CoffeaCasaEnv = False
-    CERNCondorCluster = True
+    CERNCondorCluster = False
     
     if(UsingDaskExecutor and not CoffeaCasaEnv):
         from dask.distributed import Client 
@@ -250,7 +267,7 @@ def main():
                 container_runtime = 'none',
                 log_directory = '/eos/user/a/anpotreb/condor/log',
                 scheduler_options = {
-                    'port': 8786,
+                    'port': 8787,
                     'host': socket.gethostname(),
                 },
                 job_extra = {
@@ -274,19 +291,18 @@ def main():
     load_preexisting = False
     from coffea import processor, util
     
-    outname = 'HadronEfractions.coffea'
     
-    if UsingDaskExecutor:
-        client.close()
-        time.sleep(5)
-        if CERNCondorCluster or CoffeaCasaEnv:
-            cluster.close()
+    # if UsingDaskExecutor:
+    #     client.close()
+    #     time.sleep(5)
+    #     if CERNCondorCluster or CoffeaCasaEnv:
+    #         cluster.close()
     
     # filesets
     
     tstart = time.time()
     
-    outputs_unweighted = {}
+    # outputs_unweighted = {}
     
     seed = 1234577890
     prng = RandomState(seed)
@@ -342,4 +358,5 @@ def main():
             cluster.close()
     
 if __name__ == "__main__":
-    main()
+    # main(dataset = 'fileNames/PFNanoQCD_MG_Her.txt', outname = 'HadronEfractions_QCD_resp_Her.coffea')
+    main(dataset = 'fileNames/PFNanoQCD_MG_Py.txt', outname = 'HadronEfractions_QCD_resp_Py.coffea')

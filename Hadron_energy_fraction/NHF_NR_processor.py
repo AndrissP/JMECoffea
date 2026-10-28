@@ -1,5 +1,5 @@
 '''
-A little messy processo to get the 
+A little messy processor to get the 
 '''
 
 from coffea import processor
