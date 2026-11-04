@@ -2992,3 +2992,84 @@ chunksize used = 14000Running on the number of files: -1
 
 Config parameters:
 {'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_279
+Run comment: Testing on mmachines
+Processor CoffeaJERCProcessor_L5 will be run on dask.
+The data tag "QCD-MG-Py-evtgen" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_MG_Py_2000toInf_evtgen.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-MG-Py-evtgen
+ Outname = out/CoffeaJERCOutputs_L5_QCD-MG-Py-evtgen.coffea 
+
+Config parameters:
+{'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_280
+Run comment: 
+Processor CoffeaJERCProcessor_L5 will be run on iterative for Run3.
+A specific fileslist specified. The calculation will be run on the files:
+['/ada_mnt/ada/user/anpotreb/Documents/JERC/JMECoffea/QCD_Bin-PT-15to7000_Par-PT-flat2022_JMENanoV15.root'].
+The histograms will be saved with the provided tag  
+chunksize used = 14000Running on the number of files: 1
+ Job with the full tag _L5_Run3_Puppy_example_test
+ Outname = out/CoffeaJERCOutputs_L5_Run3_Puppy_example_test.coffea 
+
+Config parameters:
+{'run_era': 'Run3', 'jec': {'Run2': {'tag': 'Summer20UL18_V2_MC', 'payload_dir': 'Summer20UL18_V2_MC', 'jet_algorithm': 'AK4PFchs', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}, 'Run3': {'tag': 'Summer24Prompt24_V5_MC', 'payload_dir': 'Summer24Prompt24_V5_MC', 'jet_algorithm': 'AK4PFPuppi', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}}, 'pileup_weights': {'Run2': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz', 'correction': 'Collisions18_UltraLegacy_goldenJSON'}, 'Run3': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz', 'correction': 'Collisions2022_355100_357900_eraBCD_GoldenJson'}}, 'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_281
+Run comment: 
+Processor CoffeaJERCProcessor_L5 will be run on dask for Run3.
+A specific fileslist specified. The calculation will be run on the files:
+['/ada_mnt/ada/user/anpotreb/Documents/JERC/JMECoffea/QCD_Bin-PT-15to7000_Par-PT-flat2022_JMENanoV15.root'].
+The histograms will be saved with the provided tag  
+chunksize used = 14000Running on the number of files: 1
+ Job with the full tag _L5_Run3_Puppy_example_test
+ Outname = out/CoffeaJERCOutputs_L5_Run3_Puppy_example_test.coffea 
+
+Config parameters:
+{'run_era': 'Run3', 'jec': {'Run2': {'tag': 'Summer20UL18_V2_MC', 'payload_dir': 'Summer20UL18_V2_MC', 'jet_algorithm': 'AK4PFchs', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}, 'Run3': {'tag': 'Summer24Prompt24_V5_MC', 'payload_dir': 'Summer24Prompt24_V5_MC', 'jet_algorithm': 'AK4PFPuppi', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}}, 'pileup_weights': {'Run2': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz', 'correction': 'Collisions18_UltraLegacy_goldenJSON'}, 'Run3': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz', 'correction': 'Collisions2022_355100_357900_eraBCD_GoldenJson'}}, 'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_282
+Run comment: Testing on mmachines
+Processor CoffeaJERCProcessor_L5 will be run on dask for Run3.
+The data tag "QCD-Py-Run3-2024-Summer24" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_Py_flat_RunIII2024_Summer24_JMENanoV15.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-Py-Run3-2024-Summer24
+ Outname = out/CoffeaJERCOutputs_L5_QCD-Py-Run3-2024-Summer24.coffea 
+
+Config parameters:
+{'run_era': 'Run3', 'jec': {'Run2': {'tag': 'Summer20UL18_V2_MC', 'payload_dir': 'Summer20UL18_V2_MC', 'jet_algorithm': 'AK4PFchs', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}, 'Run3': {'tag': 'Summer24Prompt24_V5_MC', 'payload_dir': 'Summer24Prompt24_V5_MC', 'jet_algorithm': 'AK4PFPuppi', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}}, 'pileup_weights': {'Run2': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz', 'correction': 'Collisions18_UltraLegacy_goldenJSON'}, 'Run3': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz', 'correction': 'Collisions2022_355100_357900_eraBCD_GoldenJson'}}, 'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_283
+Run comment: Running Run 3 samples
+Processor CoffeaJERCProcessor_L5 will be run on dask for Run3.
+The data tag "QCD-Her-Run3-2024-Summer24" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_Her_flat_RunIII2024_Summer24_JMENanoV15.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-Her-Run3-2024-Summer24
+ Outname = out/CoffeaJERCOutputs_L5_QCD-Her-Run3-2024-Summer24.coffea 
+
+Config parameters:
+{'run_era': 'Run3', 'jec': {'Run2': {'tag': 'Summer20UL18_V2_MC', 'payload_dir': 'Summer20UL18_V2_MC', 'jet_algorithm': 'AK4PFchs', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}, 'Run3': {'tag': 'Summer24Prompt24_V5_MC', 'payload_dir': 'Summer24Prompt24_V5_MC', 'jet_algorithm': 'AK4PFPuppi', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}}, 'pileup_weights': {'Run2': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz', 'correction': 'Collisions18_UltraLegacy_goldenJSON'}, 'Run3': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz', 'correction': 'Collisions2022_355100_357900_eraBCD_GoldenJson'}}, 'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_284
+Run comment: Running Run 3 samples
+Processor CoffeaJERCProcessor_L5 will be run on dask for Run3.
+The data tag "QCD-Py-Run3-2024-Summer24" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_Py_flat_RunIII2024_Summer24_JMENanoV15.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-Py-Run3-2024-Summer24no_isojetcut_noleptondrcut
+ Outname = out/CoffeaJERCOutputs_L5_QCD-Py-Run3-2024-Summer24no_isojetcut_noleptondrcut.coffea 
+
+Config parameters:
+{'run_era': 'Run3', 'jec': {'Run2': {'tag': 'Summer20UL18_V2_MC', 'payload_dir': 'Summer20UL18_V2_MC', 'jet_algorithm': 'AK4PFchs', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}, 'Run3': {'tag': 'Summer24Prompt24_V5_MC', 'payload_dir': 'Summer24Prompt24_V5_MC', 'jet_algorithm': 'AK4PFPuppi', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}}, 'pileup_weights': {'Run2': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz', 'correction': 'Collisions18_UltraLegacy_goldenJSON'}, 'Run3': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz', 'correction': 'Collisions2022_355100_357900_eraBCD_GoldenJson'}}, 'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': False}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': False, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}
+
+Run_index_285
+Run comment: Running Run 3 samples
+Processor CoffeaJERCProcessor_L5 will be run on dask for Run3.
+The data tag "QCD-Sherpa-Run3-2024-Summer24" found in the dataset_dictionary. The dataset with the path to file names "fileNames/QCD_Sherpa_flat_RunIII2024_Summer24_JMENanoV15.txt" will be used. 
+chunksize used = 14000Running on the number of files: -1
+ Job with the full tag _L5_QCD-Sherpa-Run3-2024-Summer24
+ Outname = out/CoffeaJERCOutputs_L5_QCD-Sherpa-Run3-2024-Summer24.coffea 
+
+Config parameters:
+{'run_era': 'Run3', 'jec': {'Run2': {'tag': 'Summer20UL18_V2_MC', 'payload_dir': 'Summer20UL18_V2_MC', 'jet_algorithm': 'AK4PFchs', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}, 'Run3': {'tag': 'Summer24Prompt24_V5_MC', 'payload_dir': 'Summer24Prompt24_V5_MC', 'jet_algorithm': 'AK4PFPuppi', 'levels': ['L1FastJet', 'L2Relative', 'L3Absolute']}}, 'pileup_weights': {'Run2': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz', 'correction': 'Collisions18_UltraLegacy_goldenJSON'}, 'Run3': {'path': '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz', 'correction': 'Collisions2022_355100_357900_eraBCD_GoldenJson'}}, 'good_lepton_cut': {'apply': True}, 'tight_lepton_veto_id': {'apply': True}, 'gen_vtx_dz_cut': {'apply': False}, 'recolep_drcut': {'apply': True}, 'jet_pt_cut': {'apply': True, 'mingenjetpt': 15}, 'leading_jet_and_alpha_cut': {'apply': True, 'alphaQCD': 1, 'alphaDY': 1, 'NjetsQCD': 3, 'NjetsDY': 2, 'ptused': 'gen', 'sort': 'gen'}, 'dphi_separation': {'apply': False, 'dphi_DY': 2.7, 'dphi_QCD': 2.7}, 'select_Nth_jet': {'apply': False, 'N': 2}, 'jet_iso_cut': {'apply': True, 'dr_cut': 0.8}, 'reco_jetMCmatching': {'apply': True, 'dR': 0.2}, 'jetflavour': 'partonFlavour', 'use_gen_weights': False, 'use_pu_weights': True, 'split_ISR_FSR_gluons': False, 'split_gluon_split_bs': False, 'split_gluon_split_cs': False}

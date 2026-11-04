@@ -133,7 +133,8 @@ def main():
     mean_name = "Median"
     mean_name_std = mean_name+'Std'
     # import pdb; pdb.set_trace()
-    closure_QCD = read_data4plot('_L5_QCD-Py'+eta_binning_str)['all'][mean_name] #read_data2(mean_name, 'all', '_L5_QCD-Py'+eta_binning_str)
+    closure_QCD = read_data4plot('_L5_QCD-Py-Run3-2024-Summer24')['all'][mean_name]
+    # closure_QCD = read_data4plot('_L5_QCD-Py'+eta_binning_str)['all'][mean_name]
     # closure_QCD = read_data2(mean_name, 'all', '_L5_QCD-Py_iso_cut'+eta_binning_str)
     # closure_QCD_iso = read_data2(mean_name, 'all', tag26)
     # closure_TTBAR = read_data2(mean_name, 'all', '_L5_QCD-Py'+eta_binning_str)
@@ -145,9 +146,9 @@ def main():
 
     data_to_read = {
         # label_on_plot: data_list,
-        r"QCD MG+Her7": read_data4plot(tag2, closure_QCD), #, closure_Py3),
-        r"QCD MG+Sherpa": read_data4plot(tag3, closure_QCD), #, closure_Py3),
-        r"QCD MG+Py8": read_data4plot(tag1, closure_QCD),
+        r"QCD Py8": read_data4plot(tag1, closure_QCD),
+        r"QCD Her7": read_data4plot(tag2, closure_QCD), #, closure_Py3),
+        r"QCD Sherpa2": read_data4plot(tag3, closure_QCD), #, closure_Py3),
     #     f"{ttbarlab} Pow+Py8": read_data4plot(tag3, closure_QCD), #[:,:-1,:],
     #     f"ZJets MG+Py8": read_data4plot(tag4, closure_QCD), #, closure_QCD)), #[:,:-1,:],
     #     f"QCD MG+Py8": read_data4plot(tag2, closure_QCD),#         f"QCD Py8": np.array(read_data4plot(flav, '_L5_QCD-Py_leading_gen_jet')), #[:,:-1,:],
@@ -185,7 +186,7 @@ def main():
             make_comparison_plot(data, 
                             {},
                             etabins, ptbins,
-                            binidx=k, flav=flav, pt_min=15, ratio_name='ratio,\nHer7/Py8', inverse=False, plotvspt=plotvspt, ratio_ylim=[0.99, 1.01], extra_text='')
+                            binidx=k, flav=flav, pt_min=15, ratio_name='ratio to Py8', inverse=False, plotvspt=plotvspt, ratio_ylim=[0.98, 1.02], extra_text='')
 
     
     # etabins_abs = etabins[(len(etabins)-1)//2:]
