@@ -100,9 +100,9 @@ def main():
     # flavors = ['all'] #, 'b', 'c', 'd', 'u', 's', 'g', 'ud', 'q', 'unmatched']
     # flavors = ['b', 'g', 'ud', 'c', 's', 'all', 'q', 'unmatched', 'd', 'u']
     # flavors = ['c_prompt', 'c_gluon_splitting', 'c', 'b_prompt', 'b_gluon_splitting', 'b', 'ud', 's', 'all', 'q', 'unmatched', 'd', 'u']
-    # flavors = ['b', 'c', 'g', 'ud', 's', 'all', 'q', 'unmatched', 'd', 'u']
+    flavors = ['b', 'c', 'g', 'ud', 's', 'all', 'q', 'unmatched', 'd', 'u']
     plotvspt = True
-    flavors = ['b', 'g', 'q', 'c']
+    # flavors = ['b', 'g', 'q', 'c', 'all']
 
     eta_binning  = "HCalPart"  ### HCalPart, JERC, CoarseCalo, CaloTowers, Summer20Flavor, onebin;
     eta_binning_str = '_'+eta_binning if eta_binning != "HCalPart" else ''
@@ -110,12 +110,12 @@ def main():
     ptbins = PtBins("MC_truth")
 
     iso_str = ''
-    tag1 = '_L5_QCD-MG-Py-evtgen'
-    tag2 = '_L5_QCD-MG-Py-2000toInf'
-    tag3 = '_L5_QCD-MG-Her-2000toInf'
-    # tag1 = '_L5_QCD-Py'+iso_str+eta_binning_str
-    # tag1_gen_gen = '_L5_QCD-Py_gen_gen'+eta_binning_str
-    # tag1_reco_reco = '_L5_QCD-Py_reco_reco'+eta_binning_str
+    # tag1 = '_L5_QCD-MG-Py-evtgen'
+    # tag2 = '_L5_QCD-MG-Py-2000toInf'
+    # tag3 = '_L5_QCD-MG-Her-2000toInf'
+    tag1 = '_L5_QCD-Py-Run3-2024-Summer24' #+iso_str+eta_binning_str
+    tag2 = '_L5_QCD-Her-Run3-2024-Summer24' #+eta_binning_str
+    tag3 = '_L5_QCD-Sherpa-Run3-2024-Summer24' #+eta_binning_str
     # tag1_gen_reco = '_L5_QCD-Py_recoforalpha'+eta_binning_str
     # tag1_genwt = '_L5_QCD-Py_genwt'+eta_binning_str
     # tag1_noiso2 = '_L5_QCD-Py_noiso2'+eta_binning_str
@@ -145,9 +145,9 @@ def main():
 
     data_to_read = {
         # label_on_plot: data_list,
-        r"QCD MG+Py8": read_data4plot(tag2, closure_QCD), #, closure_Py3),
-        r"QCD MG+Her7": read_data4plot(tag3, closure_QCD), #, closure_Py3),
-        r"QCD MG+Py8, evtGen": read_data4plot(tag1, closure_QCD),
+        r"QCD MG+Her7": read_data4plot(tag2, closure_QCD), #, closure_Py3),
+        r"QCD MG+Sherpa": read_data4plot(tag3, closure_QCD), #, closure_Py3),
+        r"QCD MG+Py8": read_data4plot(tag1, closure_QCD),
     #     f"{ttbarlab} Pow+Py8": read_data4plot(tag3, closure_QCD), #[:,:-1,:],
     #     f"ZJets MG+Py8": read_data4plot(tag4, closure_QCD), #, closure_QCD)), #[:,:-1,:],
     #     f"QCD MG+Py8": read_data4plot(tag2, closure_QCD),#         f"QCD Py8": np.array(read_data4plot(flav, '_L5_QCD-Py_leading_gen_jet')), #[:,:-1,:],
@@ -171,21 +171,10 @@ def main():
     for flav in flavors:
         data = {tag:data_to_read[tag][flav] for tag in data_to_read}
         data = {key:np.array([data[key][mean_name], data[key][mean_name_std], data[key]["MeanRecoPt"]]) for key in data}
-    #     data = {
-    #         # label_on_plot: data_list,
-    #         f"{ttbarlab} Pow+Py8": np.array(read_data4plot(flav, tag3, closure_QCD)), #[:,:-1,:],
-    #         f"ZJets MG+Py8": np.array(read_data4plot(flav, tag4, closure_QCD)), #, closure_QCD)), #[:,:-1,:],
-    #         f"QCD MG+Py8": np.array(read_data4plot(flav, tag2, closure_QCD)),#         f"QCD Py8": np.array(read_data4plot(flav, '_L5_QCD-Py_leading_gen_jet')), #[:,:-1,:],
-    #         f"QCD Py8": np.array(read_data4plot(flav, tag1, closure_QCD)), #[:,:-1,:],
-    # #         f"{ttbarlab} Pow+Her7": np.array(read_data4plot(flav, tag3Her, closure_QCD)), #[:,:-1,:],
-    # #         f"ZJets MG+Her7": np.array(read_data4plot(flav, tag4Her, closure_QCD)), #, closure_QCD)), #[:,:-1,:],
-    # #         f"QCD MG+Her7": np.array(read_data4plot(flav, tag2Her, closure_QCD)),#         f"QCD Py8": np.array(read_data4plot(flav, '_L5_QCD-Py_leading_gen_jet')), #[:,:-1,:],
-    # #         f"{ttbarlab} Pow+Py8+ISR-FSR": np.array(read_data4plot(flav, tag5, closure_QCD)), #[:,:-1,:],
-    #     }
 
     #     for k in range(len(etabins_abs)-1):
-        for k in etabins.get_bin_idx([0, 1.305, 2.5]):
-        # for k in etabins.get_bin_idx([0, 1.305, 2.5, 4]):
+        # for k in etabins.get_bin_idx([0, 1.305, 2.5]):
+        for k in etabins.get_bin_idx([0, 1.305, 2.5, 4]):
     #     for k in ptbins.get_bin_idx([20, 35, 150, 400]):
             print('Fitting subsample: ', flav)
             print('Eta: ', etabins.centres[k]) if plotvspt else print('pt: ', ptbins.centres[k])
