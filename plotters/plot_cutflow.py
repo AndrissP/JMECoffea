@@ -16,9 +16,6 @@ def remove_xminor_ticks():
     labelbottom=False) # labels along the bottom edge are off
 
 figdir = "fig/cutflow"
-if not os.path.exists(figdir):
-    os.mkdir(figdir)
-
 
 def plot_cutflow(cutflow, tag_full, ylab, fig_name, title_name=None, alt_tick_labs=None, figdir=figdir):
     ## in the processor the cutflow is not read correctly, so one has to normalize it to match the values
@@ -42,7 +39,7 @@ def plot_cutflow(cutflow, tag_full, ylab, fig_name, title_name=None, alt_tick_la
     yh = (ylim1-ylim0)
     ax.set_ylim(ylim0, ylim1+yh*0.2 )
     if not os.path.exists(figdir):
-        os.mkdir(figdir)
+        os.makedirs(figdir)
         print("Created directory: ", figdir)
     fig_name = figdir+"/"+fig_name+'_'+tag_full
     print("Saving plot with the name = ", fig_name)

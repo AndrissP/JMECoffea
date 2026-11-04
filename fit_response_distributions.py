@@ -87,6 +87,8 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     fig_path = os.path.join(script_dir, 'fig')
     if not os.path.exists(fig_path):
         os.mkdir(fig_path)
+    cutflow_path = os.path.join(fig_path, 'cutflow')
+    os.makedirs(cutflow_path, exist_ok=True)
         
     if test_run and not os.path.exists(script_dir+"/test"):
         os.mkdir(script_dir+"/test/")
@@ -327,9 +329,10 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     # sum_cutflow['cutflow_events'].variances()[:] = sum_cutflow['cutflow_events'].values()
     # sum_cutflow['cutflow_jets'].variances()[:] = sum_cutflow['cutflow_jets'].values()
     jets_pet_ev = sum_cutflow['cutflow_jets']/sum_cutflow['cutflow_events']['all_events'].value
-    plot_cutflow(sum_cutflow['cutflow_events'], tag_cutflow, ylab='N events', fig_name='cutflow_Nevents', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
-    plot_cutflow(sum_cutflow['cutflow_jets'], tag_cutflow, ylab='N jets', fig_name='cutflow_Njets', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
-    plot_cutflow(jets_pet_ev, tag_cutflow, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
+    cutflow_tag_path = os.path.join(cutflow_path, tag_cutflow)
+    plot_cutflow(sum_cutflow['cutflow_events'], tag_cutflow, ylab='N events', fig_name='cutflow_Nevents', title_name=dataset_label, figdir=cutflow_tag_path)
+    plot_cutflow(sum_cutflow['cutflow_jets'], tag_cutflow, ylab='N jets', fig_name='cutflow_Njets', title_name=dataset_label, figdir=cutflow_tag_path)
+    plot_cutflow(jets_pet_ev, tag_cutflow, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', title_name=dataset_label, figdir=cutflow_tag_path)
     # if 'cutflow_events' in hists_cutflow:
         # drawing only for the first sample as in the hist_merged, the total number of events are normalized
     if len(list(keys))>1:
@@ -339,9 +342,9 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
             dataset_label.replace('_', ' ')
 
             jets_pet_ev = cutflow['cutflow_jets']/cutflow['cutflow_events']['all_events'].value
-            plot_cutflow(cutflow['cutflow_events'], key, ylab='N events', fig_name='cutflow_Nevents', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
-            plot_cutflow(cutflow['cutflow_jets'], key, ylab='N jets', fig_name='cutflow_Njets', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
-            plot_cutflow(jets_pet_ev, key, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', title_name=dataset_label, figdir=fig_path+'/cutflow/'+tag_cutflow)
+            plot_cutflow(cutflow['cutflow_events'], key, ylab='N events', fig_name='cutflow_Nevents', title_name=dataset_label, figdir=cutflow_tag_path)
+            plot_cutflow(cutflow['cutflow_jets'], key, ylab='N jets', fig_name='cutflow_Njets', title_name=dataset_label, figdir=cutflow_tag_path)
+            plot_cutflow(jets_pet_ev, key, ylab='N jets/N events', fig_name='cutflow_Njets_per_ev', title_name=dataset_label, figdir=cutflow_tag_path)
 
     # else:
     #     print("cutflow histograms cannot be drawn because the cutflow isn't split into events and jets. Potentially not all events are selected")
@@ -359,7 +362,7 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
 if __name__ == "__main__":
     # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
-    data_tags = ["QCD-MG-Py-evtgen"]
+    data_tags = ["QCD-Py-Run3-2024-Summer24"]
     # data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"]  #['QCD-MG-Py'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
     # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
 

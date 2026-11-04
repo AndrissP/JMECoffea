@@ -55,6 +55,15 @@ Every time logging in, activate the virtual environment and after that load the 
 source /cvmfs/sft-nightlies.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.sh
 ```
 
+Use coffea update with a fix for the grid crashes (unless coffea with the fix is used)
+```
+cd ..
+git clone git@github.com:AndrissP/coffea.git
+pip install -e .
+realpath
+### load the path before running `import coffea` in python
+```
+
 ## ssh port forwarding in to use `jupyter notebooks`:
 To use jupyter notebooks you have to log into lxplus using port forwarding
 ```

@@ -10,7 +10,7 @@ Author(s): Andris Potrebko (RTU)
 # comment out or replace the path if I happened to forget to remove these lines before pushing:
 import sys
 import os
-coffea_path = '/afs/cern.ch/user/a/anpotreb/top/JERC/coffea/'
+coffea_path = '/ada_mnt/ada/user/anpotreb/Documents/JERC/coffea'
 if not os.path.exists(coffea_path):
     raise ValueError(f"The path to the coffea installation does not exist. Please supply the correct path or comment out this line if using the environment path. The provided path is: {coffea_path}.")
 if coffea_path not in sys.path:
@@ -33,7 +33,7 @@ import datetime
 
 # from numpy.random import RandomState
 import importlib
-from fileNames.available_datasets import dataset_dictionary
+from fileNames.available_datasets import dataset_dictionary, dataset_run_era
 from helpers import get_xsecs_filelist_from_file, append_endpoint_redi
 
 import platform
@@ -58,13 +58,15 @@ def run_processor(
         blacklist_sites:list = [], #'T2_IT_Rome'
         get_exact_endpoints:bool = False,
         xrootdstr:str = 'root://xrootd-cms.infn.it/',
+        run_era:str=None,
         ):
     '''
     Submits a coffea processor on an executor like iterative, dask, condor or coffea-casa. 
     Inputs:
     - The dataset can be defined either by using a `data_tag` available in `dataset_dictionary`
     or manually by defining `dataset` (below) with the path to the .txt file with the file names
-    or manually by defining `fileslist` as the list with file names.
+    or manually by defining `fileslist` as the list with file names. A `data_tag` may be supplied
+    with `fileslist` to label the dataset in the output.
     `data_tag` will be used to name output figures and histograms.
     - `add_tag` is the name of the specific run if parameters changed used for saving figures and output histograms.
     - `run_comment` is the comment for the log file: e.g., why the run is made?
@@ -75,6 +77,8 @@ def run_processor(
     - `blacklist_sites` is the list of sites to blacklist when/if obtaining exact endpoints of the files. e.g., ['T2_IT_Rome']
     - `get_exact_endpoints` is True if want to obtain the exact endpoints of the files. False if want to use the provided redirector.
     - `xrootdstr` is the redirector to use if `get_exact_endpoints` is False. default, 'root://xrootd-cms.infn.it/'
+    - `run_era` selects the era-specific JEC payloads and pileup weights ('Run2' or 'Run3').
+      If omitted, registered Run 3 dataset tags select Run 3 automatically; other inputs default to Run 2.
 
     '''
     ################ Parameters of the run and switches  #########################
@@ -87,6 +91,12 @@ def run_processor(
     tag_Lx = '_L5'                 ### L5 or L23, but L23 not supported since ages.
     processor_name = 'CoffeaJERCProcessor'+tag_Lx
     from CoffeaJERCProcessor_L5_config import processor_config, processor_dependencies
+    if run_era is None:
+        run_era = dataset_run_era.get(data_tag, "Run2")
+    if run_era not in processor_config["jec"]:
+        raise ValueError(f"Unsupported run era {run_era!r}. Available eras: {list(processor_config['jec'])}.")
+    processor_config_for_run = dict(processor_config)
+    processor_config_for_run["run_era"] = run_era
     # processor_name = 'NHF_NR_processor'
     # processor_config = None
     # processor_dependencies = []
@@ -121,14 +131,15 @@ def run_processor(
     ################ End of Parameters of the run and switches  #########################
     
     # ### Obtain the dataset and cross-sections from the dataset_dictionary. Define and print the information about the run.
-    printout = f'Processor {processor_name} will be run on {executor}.\n'  ### to be used in the saved output to .txt
+    printout = f'Processor {processor_name} will be run on {executor} for {run_era}.\n'  ### to be used in the saved output to .txt
     # tag_full = tag_Lx+'_'+data_tag+add_tag
 
-    file_setup_is_none = [fileslist is None, dataset is None, data_tag == '']
-    if sum(file_setup_is_none)==3:
-        raise ValueError(f'No data tag, dataset or fileslist provided. Please provide either data_tag, dataset or fileslist.')
-    if sum(file_setup_is_none)<2:
-        raise ValueError(f'Please provide either data_tag, dataset or fileslist. Not more than one of these can be provided.')
+    if fileslist is not None and dataset is not None:
+        raise ValueError("Please provide either a fileslist or a dataset path, not both.")
+    if fileslist is None and dataset is not None and data_tag:
+        raise ValueError("Please provide either a data tag or a dataset path, not both.")
+    if fileslist is None and dataset is None and not data_tag:
+        raise ValueError("No data tag, dataset or fileslist provided.")
 
     if not (fileslist is None):
         xsec = 1
@@ -318,7 +329,7 @@ def run_processor(
         if executor=='iterative':
             output = processor.run_uproot_job(filesets,
                                               treename='Events',
-                                              processor_instance=Processor(processor_config),
+                                              processor_instance=Processor(processor_config_for_run),
                                               executor=processor.iterative_executor,
                                               executor_args={
                                                   'skipbadfiles':True,
@@ -329,7 +340,7 @@ def run_processor(
         else:
             output = processor.run_uproot_job(filesets,
                                               treename='Events',
-                                              processor_instance=Processor(processor_config),
+                                              processor_instance=Processor(processor_config_for_run),
                                               executor=processor.dask_executor,
                                               executor_args={
                                                   'client': client,
@@ -366,7 +377,7 @@ def run_processor(
         # log_file = run_log_name.open('a')
         with open(run_log_name, 'a') as log_file:
             log_file.writelines(['\n' + file_name_title + '\nRun comment: ' + run_comment])
-            log_file.writelines(['\n' + printout, '\nConfig parameters:\n' + str(processor_config)+ '\n'])
+            log_file.writelines(['\n' + printout, '\nConfig parameters:\n' + str(processor_config_for_run)+ '\n'])
     
     print('-----'*10)
     print("All done. Congrats!")
@@ -379,14 +390,14 @@ def main():
     (opt, args) = parser.parse_args()
     data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR',
     ### overwrite data tags if this is simpler
-    data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"] 
-    data_tags = ["QCD-MG-Py-evtgen"] 
-    # data_tags = ['Herwig-TTBAR', 'Pythia-fullhad-TTBAR', 'Pythia-semilep-TTBAR'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['DY-MG-Her'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    # data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"] 
+    # data_tags = ["QCD-MG-Py-evtgen"] 
+    # data_tags = ['QCD-Py-Run3-2024-Summer24'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
+    data_tags = ['QCD-Sherpa-Run3-2024-Summer24'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['not_scaled_pion', 'scaled_pion', 'scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['Pythia-fullhad-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
     # data_tags = ['QCD-Py'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    params =      {"run_comment": 'Testing comparisong with and withoug evtgen for Pythia/Herwig. Running on 2000toInf samples', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
+    params =      {"run_comment": 'Running Run 3 samples', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
                   "blacklist_sites":[], #, 'DY-MG-Her', 'QCD-MG-Her', 'QCD-Py'
                   "get_exact_endpoints":False,
                   "add_tag": '',

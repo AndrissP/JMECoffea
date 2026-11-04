@@ -1,6 +1,31 @@
 processor_dependencies = ['LHE_flavour.py', 'common_binning.py', 'JERCProcessorcuts.py', 'is_b_had.py']
 
 processor_config = {
+    "run_era": "Run2",
+    "jec": {
+        "Run2": {
+            "tag": "Summer20UL18_V2_MC",
+            "payload_dir": "Summer20UL18_V2_MC",
+            "jet_algorithm": "AK4PFchs",
+            "levels": ["L1FastJet", "L2Relative", "L3Absolute"],
+        },
+        "Run3": {
+            "tag": "Summer24Prompt24_V5_MC",
+            "payload_dir": "Summer24Prompt24_V5_MC",
+            "jet_algorithm": "AK4PFPuppi",
+            "levels": ["L1FastJet", "L2Relative", "L3Absolute"],
+        },
+    },
+    "pileup_weights": {
+        "Run2": {
+            "path": "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz",
+            "correction": "Collisions18_UltraLegacy_goldenJSON",
+        },
+        "Run3": {
+            "path": "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz",
+            "correction": "Collisions2022_355100_357900_eraBCD_GoldenJson",
+        },
+    },
     # cut: {cut_parameters}
     "good_lepton_cut":      {"apply":True},
     "tight_lepton_veto_id": {"apply":True},

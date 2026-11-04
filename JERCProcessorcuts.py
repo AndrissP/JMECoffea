@@ -227,6 +227,50 @@ def jetMCmatching(reco_jets, dR=0.2, apply=False):
 def remove_apply(cut_tmp):
     return {key: cut_tmp[key] for key in cut_tmp if key!='apply'}
 
+def tight_lepton_veto_jet_id_mask(reco_jets):
+    if "jetId" in reco_jets.fields:
+        return (reco_jets.jetId & 6) == 6
+
+    required_fields = {
+        "eta",
+        "neHEF",
+        "neEmEF",
+        "chHEF",
+        "chMultiplicity",
+        "neMultiplicity",
+        "muEF",
+        "chEmEF",
+    }
+    missing_fields = required_fields.difference(reco_jets.fields)
+    if missing_fields:
+        raise ValueError(
+            "Cannot compute Run 3 tight-lepton-veto jet ID; missing Jet fields: "
+            f"{sorted(missing_fields)}"
+        )
+
+    abs_eta = np.abs(reco_jets.eta)
+    tight_id = ak.where(
+        abs_eta <= 2.6,
+        (reco_jets.neHEF < 0.99)
+        & (reco_jets.neEmEF < 0.9)
+        & (reco_jets.chMultiplicity + reco_jets.neMultiplicity > 1)
+        & (reco_jets.chHEF > 0.01)
+        & (reco_jets.chMultiplicity > 0),
+        ak.where(
+            abs_eta <= 2.7,
+            (reco_jets.neHEF < 0.90) & (reco_jets.neEmEF < 0.99),
+            ak.where(
+                abs_eta <= 3.0,
+                reco_jets.neHEF < 0.99,
+                (reco_jets.neMultiplicity >= 2) & (reco_jets.neEmEF < 0.4),
+            ),
+        ),
+    )
+    lepton_veto = (abs_eta > 2.7) | (
+        (reco_jets.muEF < 0.8) & (reco_jets.chEmEF < 0.8)
+    )
+    return tight_id & lepton_veto
+
 def correct_jets(selected_jets, selectedEvents, processor):
     ############ Apply Jet energy corrections on the jets ###########
     # define variables needed for corrected jets
@@ -235,7 +279,16 @@ def correct_jets(selected_jets, selectedEvents, processor):
     selected_jets['pt_raw'] = (1 - selected_jets['rawFactor']) * selected_jets['pt']     #raw pt. pt before the corrections are applied to data
     selected_jets['mass_raw'] = (1 - selected_jets['rawFactor']) * selected_jets['mass']
     selected_jets['pt_gen'] = ak.values_astype(ak.fill_none(selected_jets.matched_gen.pt, 0), np.float32)
-    selected_jets['rho'] = ak.broadcast_arrays(selectedEvents.fixedGridRhoFastjetAll, selected_jets.pt)[0]
+    if 'fixedGridRhoFastjetAll' in selectedEvents.fields:
+        rho = selectedEvents.fixedGridRhoFastjetAll
+    elif (
+        'Rho' in selectedEvents.fields
+        and 'fixedGridRhoFastjetAll' in selectedEvents.Rho.fields
+    ):
+        rho = selectedEvents.Rho.fixedGridRhoFastjetAll
+    else:
+        raise ValueError("Events are missing the fixedGridRhoFastjetAll rho branch.")
+    selected_jets['rho'] = ak.broadcast_arrays(rho, selected_jets.pt)[0]
     events_cache = selectedEvents.caches[0]
 
     reco_jets = processor.jet_factory.build(selected_jets, lazy_cache=events_cache)
@@ -302,9 +355,9 @@ def apply_jetNevent_cuts(events, cfg, cutflow_evts, cutflow_jets, processor, dat
     # Require tight lepton veto id on jets = no matched (dressed) leptons in the jet;
     # Leptons are also reconstructed as jets with just one (or more) particle, so it is important to remove them
     if cfg["tight_lepton_veto_id"]["apply"]==True:
-        reco_jets[(reco_jets.jetId >> 2 & 1)==1] ### tight lepton veto id
+        reco_jets = reco_jets[tight_lepton_veto_jet_id_mask(reco_jets)]
     cutflow_jets.fill(cutflow='tight lep. id', weight=ak.sum(ak.num(reco_jets)))
-
+ 
     if cfg["recolep_drcut"]["apply"]==True:
         reco_jets = recolep_drcut(reco_jets, leptons, leptons)
     cutflow_jets.fill(cutflow=r'$\Delta R$'+' cut with leptons', weight=ak.sum(ak.num(reco_jets)))
