@@ -26,6 +26,9 @@ dataset_labels = {
     "QCD-MG-Py": 'QCD MG+Py8',
     "QCD-MG-Her": 'QCD MG+Her7',
     "QCD-Py": 'QCD Py8',
+    "QCD-Py-Run3-2024-Summer24": 'QCD Py8 (Run 3, Summer24)',
+    "QCD-Her-Run3-2024-Summer24": 'QCD Herwig7 (Run 3, Summer24)',
+    "QCD-Sherpa-Run3-2024-Summer24": 'QCD Sherpa (Run 3, Summer24)',
     "DY-FxFx": 'ZJets FxFx',
     "scaled_pion_kaon": 'pion up/ kaon up',
     "scaled_pion": 'pion up',
@@ -55,6 +58,21 @@ dataset_dictionary = {
     "QCD-MG-Py-2000toInf":   ['fileNames/QCD_MG_Py8_20UL18/HT2000toInf.txt', 1, 'QCD MG+Py8+2000toInf'],
     "QCD-MG-Her-2000toInf":  ['fileNames/QCD_Herwig_20UL18/QCD_HT2000toInf_20UL18_JMENano_Herwig.txt', 1, 'QCD MG+Her7+2000toInf'],
     "QCD-Py":       ['fileNames/QCD20UL18_JMENano.txt', 1373000000, 'QCD Py8'],
+    "QCD-Py-Run3-2024-Summer24": [
+        'fileNames/QCD_Py_flat_RunIII2024_Summer24_JMENanoV15.txt',
+        1,
+        dataset_labels["QCD-Py-Run3-2024-Summer24"],
+    ],
+    "QCD-Her-Run3-2024-Summer24": [
+        'fileNames/QCD_Her_flat_RunIII2024_Summer24_JMENanoV15.txt',
+        1,
+        dataset_labels["QCD-Her-Run3-2024-Summer24"],
+    ],
+    "QCD-Sherpa-Run3-2024-Summer24": [
+        'fileNames/QCD_Sherpa_flat_RunIII2024_Summer24_JMENanoV15.txt',
+        1,
+        dataset_labels["QCD-Sherpa-Run3-2024-Summer24"],
+    ],
     "DY-FxFx":      ['fileNames/DYJets.txt', 1, 'ZJets FxFx'],
     "noJME-QCD-Py_pu": ['fileNames/fileNames_QCD20UL18.txt', 1, 'QCD Py8'],
     "scaled_pion_kaon": ['fileNames_pion_response/fileNames_scaled_pion_kaon.txt', 1, 'pion up/ kaon up'],
@@ -65,3 +83,9 @@ dataset_dictionary = {
     "scaled_times10_pion": ['fileNames_pion_response/fileNames_scaled_times10_pion.txt', 1, 'pion up'],
     "scaled_times100_pion": ['fileNames_pion_response/fileNames_scaled_times100_pion.txt', 1, 'pion up'],
     "not_scaled_pion": ['fileNames_pion_response/fileNames_not_scaled_pion.txt', 1, 'pion central'],}
+
+dataset_run_era = {
+    "QCD-Py-Run3-2024-Summer24": "Run3",
+    "QCD-Her-Run3-2024-Summer24": "Run3",
+    "QCD-Sherpa-Run3-2024-Summer24": "Run3",
+}

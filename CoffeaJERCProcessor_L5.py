@@ -15,7 +15,8 @@ from is_b_had import find_gluon_split_jets
 # comment out or replace the path if I happened to forget to remove these lines before pushing:
 import sys
 import os
-coffea_path = '/afs/cern.ch/user/a/anpotreb/top/JERC/coffea/'
+# coffea_path = '/afs/cern.ch/user/a/anpotreb/top/JERC/coffea/'
+coffea_path = '/ada_mnt/ada/user/anpotreb/Documents/JERC/coffea'
 if not os.path.exists(coffea_path):
     raise ValueError(f"The path to the coffea installation does not exist. Please supply the correct path or comment out this line if using the environment path. The provided path is: {coffea_path}.")
 if coffea_path not in sys.path:
@@ -53,21 +54,25 @@ class Processor(processor.ProcessorABC):
         self.jetflavour = processor_config["jetflavour"]
         self.split_ISR_FSR_gluons = processor_config["split_ISR_FSR_gluons"]
         self.split_gluon_split_bs = processor_config["split_gluon_split_bs"]
+        self.run_era = processor_config.get("run_era", "Run2")
+        jec_config = processor_config["jec"][self.run_era]
 
         ext = extractor()
-        ext.add_weight_sets([
-            "* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L1FastJet_AK4PFchs.txt",
-            "* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L2Relative_AK4PFchs.txt",
-            "* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L3Absolute_AK4PFchs.txt",
-#             "* * Summer20UL18_V2_MC/Summer19UL18_V5_MC_L2L3Residual_AK4PFchs.txt", #Doesn't do anything but for transparancy I add it
-        ])
+        jec_stack_names = [
+            f"{jec_config['tag']}_{level}_{jec_config['jet_algorithm']}"
+            for level in jec_config["levels"]
+        ]
+        jec_payloads = [
+            os.path.join(jec_config["payload_dir"], f"{name}.txt")
+            for name in jec_stack_names
+        ]
+        missing_payloads = [path for path in jec_payloads if not os.path.isfile(path)]
+        if missing_payloads:
+            raise FileNotFoundError(
+                f"Missing {self.run_era} JEC payload file(s): {missing_payloads}"
+            )
+        ext.add_weight_sets([f"* * {path}" for path in jec_payloads])
         ext.finalize()
-
-        jec_stack_names = ["Summer20UL18_V2_MC_L1FastJet_AK4PFchs",
-                           "Summer20UL18_V2_MC_L2Relative_AK4PFchs", 
-                           "Summer20UL18_V2_MC_L3Absolute_AK4PFchs",
-#                            "Summer19UL18_V5_MC_L2L3Residual_AK4PFchs",
-                          ]
 
         evaluator = ext.make_evaluator()        
         jec_inputs = {name: evaluator[name] for name in jec_stack_names}
@@ -77,6 +82,7 @@ class Processor(processor.ProcessorABC):
         name_map['JetPt'] = 'pt'
         name_map['JetMass'] = 'mass'
         name_map['JetEta'] = 'eta'
+        name_map['JetPhi'] = 'phi'
         name_map['JetA'] = 'area'
         name_map['ptGenJet'] = 'pt_gen'
         name_map['ptRaw'] = 'pt_raw'
@@ -121,8 +127,9 @@ class Processor(processor.ProcessorABC):
         
         self.flavors = self.flavor2partonNr.keys() #['b', 'c', 'u', 'd', 's', 'g', 'bbar', 'cbar', 'ubar', 'dbar', 'sbar', 'untagged']
 
-        path_to_PU_weights = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz"
-        self.pucorr = correctionlib.CorrectionSet.from_file(path_to_PU_weights)
+        pu_config = processor_config["pileup_weights"][self.run_era]
+        self.pucorr = correctionlib.CorrectionSet.from_file(pu_config["path"])
+        self.pu_weight_name = pu_config["correction"]
 
 #         ### Attempt to apply closure from a prederived file
 #        df_csv = pd.read_csv('out_txt/Closure_L5_QCD_Pythia.coffea').set_index('etaBins')
@@ -210,7 +217,7 @@ class Processor(processor.ProcessorABC):
             weights = np.ones(len(selectedEvents))
 
         if self.cfg["use_pu_weights"]:
-            weights = weights*self.pucorr['Collisions18_UltraLegacy_goldenJSON'].evaluate(selectedEvents.Pileup.nTrueInt, "nominal")
+            weights = weights*self.pucorr[self.pu_weight_name].evaluate(selectedEvents.Pileup.nTrueInt, "nominal")
         weights_jet = np.repeat(weights, shapes_jets)
 
 

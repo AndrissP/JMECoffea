@@ -97,6 +97,8 @@ def plot_corrections(result, ptbins_c, etabins, tag, flavor, plotetavals=[0, 1.3
     FitFigDir1 = 'fig/corr_vs_pt'
     FitFigDir2 = FitFigDir1+'/'+tag
     FitFigDir2 = legend_str_to_filename(FitFigDir2)
+    if not os.path.exists('fig'):
+        os.mkdir('fig')
     if not os.path.exists(FitFigDir1):
         os.mkdir(FitFigDir1)
     if not os.path.exists(FitFigDir2):
