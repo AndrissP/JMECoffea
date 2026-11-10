@@ -466,7 +466,7 @@ def fit_corrections(etaidx, data_dict, flav, data_tags,
         fit_res_new = np.concatenate([[jeteta_bins.edges[etaidx], jeteta_bins.edges[etaidx+1],
                                ncoefs_out, 
                                pt_bins.centres[ptmin_idx], pt_bins.centres[ptmax_idx-1]],
-                              [1,0,0,0,0] ])
+                              [1] + [0] * (ncoefs_out - 1)])
         print("No points to fit. Returning a unity function.")
         return fit_res_new
 

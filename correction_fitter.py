@@ -120,7 +120,7 @@ def correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, 
     
     # ### Individual fits
     
-    def do_fits(tags, names, flavors, pion_fit=False):
+    def do_fits(tags, names, flavors, pion_fit=False, closure_tag=None):
         ### Put the minimum limit on the relative uncertainty to min_rel_uncert
         # min_rel_uncert = 0.0005
         min_rel_uncert_relative = 0.05 if combine_antiflavour else False
@@ -143,7 +143,10 @@ def correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, 
     
             
     
-        closure = read_data("Median", "all", '_L5_QCD-Py'+eta_binning_str)
+        if closure_tag is None:
+            closure = read_data("Median", "all", '_L5_QCD-Py'+eta_binning_str)
+        else:
+            closure = read_data("Median", "all", closure_tag+eta_binning_str)
     
         fit_res_all_tags = {}
         for data_tag, data_name in np.transpose([tags, names]):
@@ -512,6 +515,7 @@ def correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, 
     from uncertainty_plotters import color_scheme
     
     unc_eta_str = '_'+eta_binning if eta_binning != "Summer20Flavor" else ''
+    closure_tag = None
     if correction_for == 'MGQCD_Py': #used only for the flavor uncertainties
         tags, names = ['_L5_QCD-MG-Py', '_L5_Pythia-TTBAR'], ['QCD, MG+Py8', f"{ttbarlab} Pow+Py8"]
         tags_simfit, names_simfit = ['_L5_QCD-MG-Py', '_L5_Pythia-TTBAR', '_L5_DY-MG-Py'], ['QCD, MG+Py8', f"{ttbarlab} Pow+Py8", 'DY, MG+Py8']
@@ -550,8 +554,24 @@ def correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, 
     #     tags_simfit, names_simfit = ['_L5_QCD-Py', '_L5_Pythia-TTBAR', '_L5_DY-MG-Py'], ['QCD, Py8', f"{ttbarlab}, Pow+Py8", 'DY, MG+Py8']
     #     tags_simfitMikko, names_simfitMikko = ['_L5_QCD-MG-Py', '_L5_DY-MG-Py'], ['QCD, MG+Py8', 'DY, MG+Py8']
     #     colors = {names[0]: color_scheme['QCD']['color'], names[1]: color_scheme['TTBAR']['color'], 'DY, MG+Py8':color_scheme['DY']['color']}
+    elif correction_for in (
+        'QCD-Py-Run3-2024-Summer24',
+        'QCD-Her-Run3-2024-Summer24',
+        'QCD-Sherpa-Run3-2024-Summer24',
+    ):
+        if not combine_antiflavour:
+            raise ValueError("Run 3 flavor corrections require combine_antiflavour=True")
+        sample = correction_for.split('-')[1]
+        do_simfit = False
+        do_Mikkofit = False
+        tags, names = [f'_L5_{correction_for}'], [f'QCD, {sample} Run3']
+        closure_tag = '_L5_QCD-Py-Run3-2024-Summer24'
+        txtfile_outname = (
+            'Summer24Prompt24_V5_MC/'
+            f'Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_{sample}.txt'
+        )
     else:
-        raise ValueError("Please provide correction_for from ['Py', 'Her', 'Her_MGQCD' or 'Py_MGQCD']")
+        raise ValueError("Please provide a supported Run 2 or Run 3 correction_for value")
         
     if combine_antiflavour == False:
         do_simfit=False
@@ -574,7 +594,12 @@ def correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, 
     else:
         flavors = ['b', 'c', 'g', 's', 'ud', 'q', 'u', 'd', 'all']
 
-    fit_res_all_tags = do_fits(tags, names, flavors) #:-1 to exclude DY
+    fit_res_all_tags = do_fits(
+        tags,
+        names,
+        flavors,
+        closure_tag=closure_tag,
+    ) #:-1 to exclude DY
     if do_simfit:
         fit_res_all_tags['simfit'] = do_fits_simfit(tags_simfit, names_simfit, colors, flavors)
     if do_Mikkofit:
@@ -586,4 +611,13 @@ def correction_fitter(saveplots = True, do_simfit = False, do_Mikkofit = False, 
     print("All done. Congrats!")
     
 if __name__ == "__main__":
-    correction_fitter()
+    for sample in ('Py', 'Her', 'Sherpa'):
+        correction_fitter(
+            saveplots=True,
+            do_simfit=False,
+            do_Mikkofit=False,
+            correction_for=f'QCD-{sample}-Run3-2024-Summer24',
+            eta_binning="HCalPart",
+            combine_antiflavour=True,
+            figdir="fig/median_correction_fits",
+        )
