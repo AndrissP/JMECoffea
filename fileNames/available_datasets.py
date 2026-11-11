@@ -27,7 +27,7 @@ dataset_labels = {
     "QCD-MG-Her": 'QCD MG+Her7',
     "QCD-Py": 'QCD Py8',
     "QCD-Py-Run3-2024-Summer24": 'QCD Py8 (Run 3, Summer24)',
-    "QCD-Her-Run3-2024-Summer24": 'QCD Herwig7 (Run 3, Summer24)',
+    "QCD-Her-Run3-2024-Summer24": 'QCD Her7 (Run 3, Summer24)',
     "QCD-Sherpa-Run3-2024-Summer24": 'QCD Sherpa (Run 3, Summer24)',
     "DY-FxFx": 'ZJets FxFx',
     "scaled_pion_kaon": 'pion up/ kaon up',
