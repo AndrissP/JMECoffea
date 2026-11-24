@@ -38,6 +38,7 @@ import plotters.plot_makers as plot_makers
 # from common_binning import JERC_Constants
 from fileNames.available_datasets import dataset_dictionary, dataset_labels
 from plotters.plot_cutflow import plot_cutflow
+from save_json import save_json
 
 def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     ''' The script fits the response histograms (or calculates the medians) and creates the `txt` files with the fit results
@@ -51,8 +52,11 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
 
     # Use the dictionary values, or the defaults if they are not in the dictionary
     test_run = config.get('test_run', False)
-    load_fit_res = config.get('load_fit_res', False)
     saveplots = config.get('saveplots', False)
+    save_fit_results = config.get('save_fit_results', True)
+    fit_results_format = config.get('fit_results_format', 'json')
+    if fit_results_format not in ('json', 'csv'):
+        raise ValueError("fit_results_format must be either 'json' or 'csv'")
     combine_antiflavour = config.get('combine_antiflavour', False)
     eta_binning = config.get('eta_binning', 'HCalPart')
     pt_binning = config.get('pt_binning', 'MC_truth')
@@ -187,6 +191,8 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
         N_failed = 0
     
         FitFigDir1 = fig_path+'/responses/responses'+tag_full
+        if saveplots and not os.path.exists(fig_path+'/responses/'):
+            os.mkdir(fig_path+'/responses/')
         if saveplots and not os.path.exists(FitFigDir1):
             os.mkdir(FitFigDir1)
         
@@ -275,20 +281,13 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
         print('-'*25)
         print('-'*25)
         print('Fitting flavor: ', flav)
-        if load_fit_res:
-            result = {}
-            keys = ["Mean", "MeanStd", "Median", "MedianStd", "MeanRecoPt"] 
-            for key in keys:
-                result[key] = h.read_data(key, flav, tag_fit_res, out_txt_path)
-        
-        else:
-            result = fit_responses(hists_merged, flav, saveplots=saveplots) #scaled_hist
-            result_each_flav[flav] = result
-            medians.append(result["Median"][0][0])
-            medianstds.append(result["MedianStd"][0][0])
+        result = fit_responses(hists_merged, flav, saveplots=saveplots) #scaled_hist
+        result_each_flav[flav] = result
+        medians.append(result["Median"][0][0])
+        medianstds.append(result["MedianStd"][0][0])
+        if save_fit_results and fit_results_format == 'csv':
             for key in result:
                 h.save_data(result[key], key, flav, tag_fit_res, pt_bins.centres, fiteta_bins.edges, out_txt_path)
-                pass
 
     #     print("result = ", result)
         # median = result["Median"]
@@ -301,8 +300,8 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
             plot_makers.plot_corrections(result, pt_bins.centres, fiteta_bins, tag_fit_res, flav, plotetavals=[0, 1.305, 2.5, 3.139], plotmean=True)
     #         plotters.plot_corrections_eta(result["Median"], result["MedianStd"], pt_bins, fiteta_bins.centres, tag_fit_res, flav, plotptvals=[20, 35, 150, 400])
 
-    from save_json import save_json
-    save_json(result_each_flav, pt_bins, fiteta_bins, out_txt_path+'/response_fit_results'+tag_fit_res+'.json')
+    if save_fit_results and fit_results_format == 'json':
+        save_json(result_each_flav, pt_bins, fiteta_bins, out_txt_path+'/response_fit_results'+tag_fit_res+'.json')
 
 
     print('-'*25)
@@ -362,6 +361,7 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
 if __name__ == "__main__":
     # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
     # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
+    # data_tags = ["QCD-Py-Run3-2024-Summer24","QCD-Her-Run3-2024-Summer24","QCD-Sherpa-Run3-2024-Summer24"]
     data_tags = ["QCD-Py-Run3-2024-Summer24"]
     # data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"]  #['QCD-MG-Py'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
     # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
@@ -372,8 +372,9 @@ if __name__ == "__main__":
     config = {
          ################ Parameters of the run and switches  #########################
         "test_run"            : False,   ### True check on a file that was created with a processor with `test_run=True` (maybe obsolete because this can be specified just in the data_tag)
-        "load_fit_res"        : False,   ###  (also kind of obsolete because plotting scripts exist in `plotters` ) True if only replot the fit results without redoing histogram fits
-        "saveplots"           : False,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
+        "saveplots"           : True,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
+        "save_fit_results"    : True,    ### True if save the fit results
+        "fit_results_format"  : 'json',  ### 'json' or 'csv'
         "combine_antiflavour" : True,    ### True if combine the flavor and anti-flavour jets into one histogram
         
         ### Choose eta binning for the response fits.
@@ -398,8 +399,8 @@ if __name__ == "__main__":
 
 
         ### Define which flavors should be fit
-        # "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        # "flavors":                ['b', 'g'],
+        "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        # "flavors":                ['b'],
         # "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
         # "flavors": ['b_gluon_splitting', "b_prompt", 'c_gluon_splitting', "c_prompt", 'b', 'c'],
 

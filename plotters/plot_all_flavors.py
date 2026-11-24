@@ -36,7 +36,7 @@ pltStyle(style='hep', font_frac=1.05)
 
 # from uncertainty_plotters import color_scheme
 color_scheme = {key: cycler_vals
-    for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 's', 'q', 'cs', 'u', 'd'])}
+    for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'ud', 'c', 'b', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 's', 'q', 'cs', 'u', 'd', 'all'])}
 # color_scheme_antiflav = {key: cycler_vals
 #     for cycler_vals, key in zip(plt.rcParams['axes.prop_cycle'], ['g', 'udbar', 'cbar', 'bbar', 'QCD', 'DY', 'TTBAR', 'DY200', 'unmatched', 'sbar', 'qbar'])}
 # color_scheme = color_scheme | color_scheme_antiflav
@@ -77,10 +77,11 @@ def draw_all_flavors(data_dict,
                               binidx=0, 
                               pt_min = 17,
                               inverse = True,
-                              flavors = ['b', 'g', 'u', 'd', 'c', 's', 'all', 'q', 'unmatched']):
+                              flavors = ['b', 'g', 'u', 'd', 'c', 's', 'all', 'q', 'unmatched'],
+                              mean_name = "Median"):
     ''' make a plot of the response_vs_pt for all the flavours for the bin given by the index `binidx`.
     data_dict: input data dictionary. The order of the keys for plotting is given by `samples`
-    function_dict: splines to be drawn over the points
+    function_dict: splines to be drawn over the points. If empty for the given key, no spline is drawn. The order of the keys for plotting is given by `samples`
     samples: list of keys of the data_dict to be plotted
     etabins: the eta binning
     ptbins: the pt binning
@@ -101,11 +102,11 @@ def draw_all_flavors(data_dict,
 
     points_ls = []
     for flav in flavors:
-        lab = legend_dict_short[flav]
+        lab = legend_dict_short[flav] if flav in legend_dict_short else flav
 
         if len(samples)>1:
             data2 = data_dict[samples[1]][flav]
-            yvals, stds, xvals = prepare_points(data2, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt)
+            yvals, stds, xvals = prepare_points(data2, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt, mean_name=mean_name)
             # points = ax.errorbar(xvals, yvals,
             #                 yerr=stds,
             #                 linestyle='none', label=lab,  **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=1.0)
@@ -115,7 +116,8 @@ def draw_all_flavors(data_dict,
                             linestyle='none', mfc='white', markeredgewidth=1.2, **color_scheme[flav], capsize=1.6, capthick=0.7, linewidth=0.8)
 
         data1 = data_dict[samples[0]][flav]
-        yvals, stds, xvals = prepare_points(data1, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt)
+        yvals, stds, xvals = prepare_points(data1, pt_min=pt_min, binidx=binidx, etabins=etabins, ptbins=ptbins, inverse=inverse, use_recopt=use_recopt, mean_name=mean_name)
+        # print(f"Flavor: {flav}, Mean: {yvals}, Std: {stds}")
 
         points = ax.errorbar(xvals, yvals,
                         yerr=stds,
@@ -125,19 +127,25 @@ def draw_all_flavors(data_dict,
             points_ls.append(points[0])
             if len(samples)>1:
                 points_ls.append(points2[0])
-
-        yvals_cont = prepare_splines(function_dict[samples[0]][flav], xvals_c, etabins, binidx, inverse)
-        # print(yvals_cont)
-        ax.plot(xvals_c, yvals_cont, markersize=0, **color_scheme[flav], linewidth=1.0)
+        flav2 = flav if flav != 'all' else 'a' ## for the functions where 'all' is stored as 'a'
+        sample_functions = function_dict.get(samples[0], {})
+        if flav2 in sample_functions:
+            yvals_cont = prepare_splines(sample_functions[flav2], xvals_c, etabins, binidx, inverse)
+            ax.plot(xvals_c, yvals_cont, markersize=0, **color_scheme[flav], linewidth=1.0)
         if len(samples)>1:
-            yvals_cont = prepare_splines(function_dict[samples[1]][flav], xvals_c, etabins, binidx, inverse)
-            ax.plot(xvals_c, yvals_cont, '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
+            sample_functions = function_dict.get(samples[1], {})
+            if flav in sample_functions:
+                yvals_cont = prepare_splines(sample_functions[flav], xvals_c, etabins, binidx, inverse)
+                ax.plot(xvals_c, yvals_cont, '-.', markersize=0, **color_scheme[flav], linewidth=1.0)
     bins = etabins
     if plotvspt:
         xlabel = r'$p_{T,reco}$ (GeV)' if use_recopt else r'$p_{T,ptcl}$ (GeV)'
     else:
         xlabel = r'$|\eta|$'
-    ylabel = r'correction (1/median)' if inverse else r'median response'
+    if mean_name == "Median":
+        ylabel = r'correction (1/median)' if inverse else r'median response'
+    else:
+        ylabel = r'correction (1/mean)' if inverse else r'mean response'
     ax.set_ylabel(ylabel)
     if plotvspt:
         ax.set_xscale('log')
@@ -195,15 +203,16 @@ def draw_all_flavors(data_dict,
 
 def prepare_points(data_dict, pt_min=17, binidx=0,
                               etabins=JetEtaBins("HCalPart", absolute=True), #np.array(JERC_Constants.etaBinsEdges_CaloTowers_full()),
-                              ptbins=PtBins("MC_truth"), inverse=True, plotvspt = True, use_recopt = False):
+                              ptbins=PtBins("MC_truth"), inverse=True, plotvspt = True, use_recopt = False, mean_name = "Median"):
     
     start = ptbins.get_bin_idx(pt_min) if plotvspt else 0
     end = ptbins.nbins if plotvspt else etabins.nbins
+    mean_name_std = mean_name+'Std'
 
     data_range = tuple([range(start,end),binidx]) if plotvspt else tuple([binidx, range(start,end)])
-    yvals = data_dict["Median"][data_range]
+    yvals = data_dict[mean_name][data_range]
     # end = np.min([len(yv) for yv in yvals])+start #cut, so that all yvals are the same
-    stds = data_dict["MedianStd"][data_range]
+    stds = data_dict[mean_name_std][data_range]
     reco_pts = data_dict["MeanRecoPt"][data_range] 
     # reco_pts  = np.array([key[2][data_range] if len(key[2].shape)==2 else key[2][data_range] for key in data_dict.values()])
     ### Replacing response values to corrections
@@ -255,9 +264,11 @@ def prepare_splines(function, xvals_c, bins, binidx, inverse):
 # list_corr_Aut18 = ["Autumn18_V3_MC_Pythia8_"+samp+"_L2Relative_AK4PFchs.txt" for samp in Aut18_samples]
 # corr_loc_Aut18 = ["* * ../Autumn18_V3_MC_Pythia8/"+corr for corr in list_corr_Aut18]
 # corr_loc_Winter14 = ["* * ../Winter14_V8_MC_L5Flavor/Winter14_V8_MC_L5Flavor_AK5PFchs.txt"]
-corr_loc_Sum20Her_Summer20Flavor = ["* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD_Her.txt"]
-corr_loc_Sum20_Summer20Flavor    = ["* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD.txt"]
-# corr_loc_Sum20Her_HCAL = ["* * ../Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_simfit_Her_HCalPart.txt"]
+# corr_loc_Sum20Her_Summer20Flavor = ["* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD_Her.txt"]
+# corr_loc_Sum20_Summer20Flavor    = ["* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD.txt"]
+corr_loc_Sum24 = ["* * Summer24Prompt24_V5_MC/Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_Py.txt"]
+corr_loc_Sum24_Her = ["* * Summer24Prompt24_V5_MC/Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_Her.txt"]
+corr_loc_Sum24_Sherpa = ["* * Summer24Prompt24_V5_MC/Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_Sherpa.txt"]
 # corr_loc_Sum20_HCAL    = ["* * ../Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_standalonePy_simfit_HCalPart.txt"]
 # corr_loc_Sum20_HCAL    = ["* * ../Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD_HCalPart.txt"]
 
@@ -266,17 +277,17 @@ corr_loc_Sum20_Summer20Flavor    = ["* * Summer20UL18_V2_MC/Summer20UL18_V2_MC_L
 # corr_loc_Sum20_Her = ["* * ../Summer20UL18_V2_MC/Summer20UL18_V2_MC_L5Flavor_AK4PFchs_Her-etaAut18.txt"]
 
 ext = extractor()
-ext.add_weight_sets(corr_loc_Sum20Her_Summer20Flavor+corr_loc_Sum20_Summer20Flavor) #+corr_loc_Sum20_Her)
+ext.add_weight_sets(corr_loc_Sum24+corr_loc_Sum24_Her+corr_loc_Sum24_Sherpa) #+corr_loc_Sum20_Her)
 ext.finalize()
 
 evaluator = ext.make_evaluator()
 
-eta_binning  = "Summer20Flavor" #"CoarseCalo"  ### HCalPart, JERC, CoarseCalo, CaloTowers, Summer20Flavor, onebin;
+eta_binning  = "HCalPart" #"CoarseCalo"  ### HCalPart, JERC, CoarseCalo, CaloTowers, Summer20Flavor, onebin;
 eta_binning_str = '_'+eta_binning if eta_binning != "HCalPart" else ''
 eta_binning_str_corr = '_'+eta_binning if eta_binning != "Summer20Flavor" else ''
 # load_fit_res=True
 # subsamples = ['all', 'b', 'c', 'd', 'u', 's', 'g']
-flavors = ['b', 'c', 'd', 'u', 's', 'g']
+flavors = ['all', 'b', 'c', 'd', 'u', 's', 'g']
 # flavors = ['ud','b', 's', 'u', 'd', 'g']
 # flavors = ['g']
 # etabins = np.array(JERC_Constants.etaBinsEdges_Aut18_full())
@@ -285,14 +296,15 @@ flavors = ['b', 'c', 'd', 'u', 's', 'g']
 
 # flavors = ['ud', 'b']
 # flavors = ['all']
-tag1 = '_L5_QCD-Py'+eta_binning_str
+tag1 = '_L5_QCD-Py-Run3-2024-Summer24'+eta_binning_str
 # tag1_genwt = '_L5_QCD-Py_genwt'+eta_binning_str
-tag2 = '_L5_QCD-MG-Py'+eta_binning_str
-tag2Her = '_L5_QCD-MG-Her'+eta_binning_str
-tag3 = '_L5_Pythia-TTBAR'+eta_binning_str
-tag3Her = '_L5_Herwig-TTBAR'+eta_binning_str
-tag4 = '_L5_DY-MG-Py'+eta_binning_str
-tag4Her = '_L5_DY-MG-Her'+eta_binning_str
+tag2 = '_L5_QCD-Her-Run3-2024-Summer24'+eta_binning_str
+tag3 = '_L5_QCD-Sherpa-Run3-2024-Summer24'+eta_binning_str
+# tag2Her = '_L5_QCD-MG-Her'+eta_binning_str
+# tag3 = '_L5_Pythia-TTBAR'+eta_binning_str
+# tag3Her = '_L5_Herwig-TTBAR'+eta_binning_str
+# tag4 = '_L5_DY-MG-Py'+eta_binning_str
+# tag4Her = '_L5_DY-MG-Her'+eta_binning_str
 
 # tag1 = '_L5_QCD-MG-Her'+eta_binning_str
 # tag2 = '_L5_QCD-Py'+eta_binning_str
@@ -302,10 +314,12 @@ tag4Her = '_L5_DY-MG-Her'+eta_binning_str
 
     
 if __name__ == "__main__":
-    closure_corr = read_data4plot(tag1)['all']['Median'] #divide by Pythia-standalone QCD
 
-    mean_name = "Median"
+    mean_name = "Mean"
     mean_name_std = mean_name+'Std'
+
+
+    closure_corr = read_data4plot(tag1)['all'][mean_name] #divide by Pythia-standalone QCD
 
     etabins = JetEtaBins(eta_binning, absolute=True)
     ptbins = PtBins("MC_truth")
@@ -322,12 +336,18 @@ if __name__ == "__main__":
     #         }
 
     data = {
-            f"{ttbarlab} Pow+Py8": read_data4plot(tag3, closure_corr),
+            # f"QCD, Pythia8": read_data4plot(tag1, closure_corr),
+            # f"QCD, Herwig7": read_data4plot(tag2, closure_corr),
+            f"QCD, Sherpa": read_data4plot(tag3, closure_corr),
+            # f"QCD, Sherpa": read_data4plot(tag3, 1),
             # f"{ttbarlab} Pow+Her7": read_data4plot(tag3Her, closure_corr),
             }
-
+    flavors2 = flavors.copy() 
+    flavors2[0] = 'a'
     functions = {
-            f"{ttbarlab} Pow+Py8":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_{flav}T'], None]  for flav in flavors},
+            # f"QCD, Pythia8":    {flav: [evaluator[f'Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_Py_{flav}J'], None]  for flav in flavors2},
+            # f"QCD, Herwig7":    {flav: [evaluator[f'Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_Her_{flav}J'], None]  for flav in flavors2},
+            # f"QCD, Sherpa":    {flav: [evaluator[f'Summer24Prompt24_V5_MC_L5Flavor_AK4PFPuppi_Sherpa_{flav}J'], None]  for flav in flavors2},
             # f"{ttbarlab} Pow+Her7":    {flav: [evaluator[f'Summer20UL18_V2_MC_L5Flavor_AK4PFchs_MGQCD{eta_binning_str_corr}_Her_{flav}T'], None]  for flav in flavors}
             }
 
@@ -349,4 +369,5 @@ if __name__ == "__main__":
                                 binidx=k, 
                                 pt_min = 17,
                                 inverse = True,
-                                flavors = flavors)
+                                flavors = flavors,
+                                mean_name = mean_name)
