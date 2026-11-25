@@ -6,7 +6,8 @@ The main structure of the code:
 - `run_processor.py` runs the suplied coffea processor (e.g., `CoffeaJERCProcessor_L5.py`) and saves the results in .coffea files.
 - `fit_response_distributions.py` fits the response distributions and stores the results in .txt/.json files.
 - `correction_fitter.ipynb` or `correction_fitter.py` reads the response fit results, fits them vs the reco pt and stores JEC as `.txt` files.
-- `flavor_fractions_and_uncertainties.ipynb` reads the response histograms, response fits and the flavor corrections and produces flavor uncertainties and relevent plots. Also, it produces the plots of the fractions of each jet flavor in bins of jet pt.
+- `flavour_fractions.py` reads the response histograms and produces flavor fractions and their plots.
+- `flavour_uncertainties.py` combines the flavor fractions and response corrections to calculate flavor uncertainties. The original `flavor_fractions_and_uncertainties.ipynb` is retained as a reference.
 - `plotters/Plotting_comparison.ipynb` allows to plot different responses and corrections vs pt or jet_eta.
 
 
@@ -81,12 +82,13 @@ Then copy the link in the output and connect in to your broswer, replacing the r
 ## Running the code:
 
 ### Running the L5 (or L2L3Rel) processors
-Run the histogram creation (for testing, change `test_run=True` under 'Parameters of the run and switches' in `run_processor.py`)
+Run the histogram creation
 ```
-python run_processor.py
+python run_processor.py -d QCD-Py-Run3-2024-Summer24 -e iterative
 ```
-By default it runs the CoffeaJERCProcessor_L5.py.
+By default it runs the `CoffeaJERCProcessor_L5.py` processor.
 The results are stored in .coffea files in `out/`.
+Run `python run_processor.py --help` for help, run `python run_processor.py --test-run` to test.
 
 ### Fitting and plotting the response distributions
 Change the appropriate data_tags over which to run the data in `fit_response_distributions.py`. Run the fits:
@@ -102,4 +104,14 @@ python correction_fitter.py
 Or follow `correction_fitter.ipynb`.
 
 ### Fitting the flavor uncertainties
-Follow `flavor_fractions_and_uncertainties.ipynb`.
+Calculate the flavor fractions (defaults match the Run 2 notebook setup):
+```
+python flavour_fractions.py
+```
+The script saves a JSON cache under `out_txt/`. It can optionally save plots and ROOT output; use `--help` to see the available settings.
+
+Calculate the flavor uncertainties:
+```
+python flavour_uncertainties.py
+```
+The uncertainty script reuses a fraction cache only when its input files and configuration match; otherwise it recomputes the fractions. Pass `--recompute-fractions` to force a fresh calculation. By default it saves uncertainty results as JSON and plots, without changing any correction or uncertainty text payload. To create updated payload copies, provide source files with `--uncertainty-files`; output files are written alongside those sources with a `_run2flavor` suffix and are not overwritten unless `--overwrite-output` is specified. Use `--help` for the full command-line options.

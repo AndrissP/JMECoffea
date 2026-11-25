@@ -17,7 +17,7 @@ if coffea_path not in sys.path:
     sys.path.insert(0,coffea_path)
 # ### Imports 
 import os
-import optparse
+import argparse
 from packaging import version
 import coffea
 if version.parse(coffea.__version__) < version.parse('0.7.21'):
@@ -383,44 +383,58 @@ def run_processor(
     print("All done. Congrats!")
 
 def main():
-    #configuration
-    usage = 'usage: %prog [options]'
-    parser = optparse.OptionParser(usage)
-    parser.add_option('-d', '--data',        dest='data_tag',    help='data tag from the available datasets',      default=None,        type='string')
-    (opt, args) = parser.parse_args()
-    data_tags = [opt.data_tag] #'QCD-Py', 'DY-MG-Py', 'QCD-MG-Py', 'Pythia-TTBAR', 'QCD-MG-Her', 'DY-MG-Her', 'Herwig-TTBAR',
-    ### overwrite data tags if this is simpler
-    # data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"] 
-    # data_tags = ["QCD-MG-Py-evtgen"] 
-    # data_tags = ['QCD-Py-Run3-2024-Summer24'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    data_tags = ['QCD-Sherpa-Run3-2024-Summer24'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['not_scaled_pion', 'scaled_pion', 'scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion'] if opt.data_tag is None else [data_tags] # [, 'DY-MG-Her', 'QCD-MG-Her', 'Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['Pythia-fullhad-TTBAR'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    # data_tags = ['QCD-Py'] if opt.data_tag is None else [data_tags] # ['Pythia-TTBAR', 'Herwig-TTBAR']
-    params =      {"run_comment": 'Running Run 3 samples', #Reruning all the samples with the settings for the meeting in Nov 28 (the golden settings
-                  "blacklist_sites":[], #, 'DY-MG-Her', 'QCD-MG-Her', 'QCD-Py'
-                  "get_exact_endpoints":False,
-                  "add_tag": '',
-                #   "add_tag":'_200files',
-                  "Nfiles": -1,
-                #   "xrootdstr":'',
-                  
-                  } 
-    
-    Nfiles = -1 
-    # dataset = 'fileNames/PFNanoTTToSemiLepPowPy.txt'
-    # dataset = 'Hadron_energy_fraction/fileNames/PFNanoQCD_MG_Her.txt'
-    # dataset = 'fileNames/PFNanoTTToSemiLepPowHer.txt'
+    parser = argparse.ArgumentParser(description="Run the Coffea JERC processor.")
+    parser.add_argument(
+        "-d", "--data", dest="data_tag",
+        help="dataset tag from the available datasets defined in fileNames/available_datasets.py",
+        default="QCD-Py-Run3-2024-Summer24", # QCD-Her-Run3-2024-Summer24, QCD-Sherpa-Run3-2024-Summer24
+    )
+    parser.add_argument(
+        "-e", "--executor",
+        choices=("iterative", "futures", "dask", "condor", "coffea-casa"),
+        default="dask",
+        help="executor used to run the processor (default: dask)",
+    )
+    parser.add_argument(
+        "--test-run", action="store_true",
+        help="run on one file and at most five chunks. Store output with a '_test' suffix to not overwrite existing files (default: False)",
+    )
+    parser.add_argument("--run-comment", default="Reruning with gen vtx dz cut")
+    parser.add_argument(
+        "--blacklist-sites", nargs="+", default=[],
+        help="site names to blacklist when resolving file endpoints",
+    )
+    parser.add_argument(
+        "--get-exact-endpoints", action="store_true",
+        help="resolve exact file endpoints instead of using the configured redirector",
+    )
+    parser.add_argument("--add-tag", default="", help="additional output tag")
+    parser.add_argument(
+        "-n", "--nfiles", dest="Nfiles", type=int, default=-1,
+        help="number of files to process; -1 means all files; ignored if --test-run is set",
+    )
+    parser.add_argument(
+        "--xrootdstr", default="root://xrootd-cms.infn.it/",
+        help="redirector prepended to file paths",
+    )
+    parser.add_argument(
+        "--run-era", choices=("Run2", "Run3"),
+        help="era-specific JEC payloads and pileup weights (default: inferred from dataset)",
+    )
+    opt = parser.parse_args()
 
-    # xrootdstr = 'file://'
-    # def txt2filesls(dataset_name):
-    #     with open(dataset_name) as f:
-    #         rootfiles = f.read().split()
-    #         fileslist = [xrootdstr + file for file in rootfiles]
-    #     return fileslist
-    # fileslist = txt2filesls(dataset)[:Nfiles]
-    for data_tag in data_tags:
-        run_processor(data_tag=data_tag, test_run=False, executor='dask', **params)
+    run_processor(
+        data_tag=opt.data_tag,
+        executor=opt.executor,
+        test_run=opt.test_run,
+        run_comment=opt.run_comment,
+        blacklist_sites=opt.blacklist_sites,
+        get_exact_endpoints=opt.get_exact_endpoints,
+        add_tag=opt.add_tag,
+        Nfiles=opt.Nfiles,
+        xrootdstr=opt.xrootdstr,
+        run_era=opt.run_era,
+    )
     # run_processor(fileslist=fileslist,
     #                         executor='dask',
     #                         test_run=False,
