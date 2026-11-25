@@ -91,11 +91,15 @@ The results are stored in .coffea files in `out/`.
 Run `python run_processor.py --help` for help, run `python run_processor.py --test-run` to test.
 
 ### Fitting and plotting the response distributions
-Change the appropriate data_tags over which to run the data in `fit_response_distributions.py`. Run the fits:
+Run the fits with the default dataset:
 ```
-python fit_response_distributions.py
+python fit_response_distributions.py --data QCD-Her-Run3-2024-Summer24
+python fit_response_distributions.py --data QCD-Py-Run3-2024-Summer24,QCD-Her-Run3-2024-Summer24
 ```
-The fit results are stored in .txt files in `out_txt/` and plots in `fig/`.
+
+Run `python run_processor.py --help` for help.
+
+Fit results are saved in `out_txt/` by default as a combined JSON file ; select CSV with `--fit-results-format csv` to save the per-flavor, per-result CSV files. Response plots are saved in `fig/` by default.
 
 ### Fitting respponses and creating output txt files
 ```

@@ -19,6 +19,7 @@ Author(s): Andris Potrebko (RTU)
 
 from coffea import util
 import numpy as np
+import argparse
 
 # import inspect
 import matplotlib.pyplot as plt
@@ -358,57 +359,121 @@ def fit_response_distributions(data_tag='Pythia-TTBAR', config=None):
     print('-----'*10)
     print("All done. Congrats!")
   
-if __name__ == "__main__":
-    # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR', 'QCD-MG-Py', 'QCD-MG-Her', 'QCD-Py', 'DY-MG-Py', 'DY-MG-Her']
-    # data_tags = ['Pythia-TTBAR_iso_dr_0p8','Pythia-TTBAR_iso_dr_1p2', 'Pythia-TTBAR_iso_dr_1p5'] #Pythia-semilep-TTBAR
-    # data_tags = ["QCD-Py-Run3-2024-Summer24","QCD-Her-Run3-2024-Summer24","QCD-Sherpa-Run3-2024-Summer24"]
-    data_tags = ["QCD-Py-Run3-2024-Summer24"]
-    # data_tags = ["QCD-MG-Her-2000toInf", "QCD-MG-Py-2000toInf", "QCD-MG-Py-evtgen"]  #['QCD-MG-Py'] #, 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
-    # data_tags = ['scaled_times2_pion', 'scaled_times5_pion', 'scaled_times10_pion', 'scaled_pion', 'not_scaled_pion'] #Pythia-semilep-TTBAR
+def main(argv=None):
+    def parse_bool(value):
+        normalized = value.lower()
+        if normalized in ("true", "yes", "1", "on"):
+            return True
+        if normalized in ("false", "no", "0", "off"):
+            return False
+        raise argparse.ArgumentTypeError(
+            f"expected a boolean value (true/false), got {value!r}"
+        )
 
-    # data_tags = ['QCD-Py'] # , 'Pythia-TTBAR_100files_noiso', 'DY-MG-Py_noiso', 'QCD-MG-Py_noiso'] # 'Pythia-non-semilep-TTBAR', 'DY-MG-Py', 'QCD-MG-Py' Pythia-semilep-TTBAR
-    # data_tags = ['Pythia-TTBAR', 'Herwig-TTBAR'] #Pythia-semilep-TTBAR
+    def add_boolean_option(option, dest, default, help_text, add_negative_option=True):
+        parser.add_argument(
+            option, dest=dest, nargs="?", const=True, type=parse_bool,
+            default=default, metavar="BOOL", help=help_text,
+        )
+        if add_negative_option:
+            parser.add_argument(
+                option.replace("--", "--no-", 1), dest=dest, action="store_false",
+                default=default, help=argparse.SUPPRESS,
+            )
 
-    config = {
-         ################ Parameters of the run and switches  #########################
-        "test_run"            : False,   ### True check on a file that was created with a processor with `test_run=True` (maybe obsolete because this can be specified just in the data_tag)
-        "saveplots"           : True,    ### True if save all the response distributions. There are many eta/pt bins so it takes time and space
-        "save_fit_results"    : True,    ### True if save the fit results
-        "fit_results_format"  : 'json',  ### 'json' or 'csv'
-        "combine_antiflavour" : True,    ### True if combine the flavor and anti-flavour jets into one histogram
-        
-        ### Choose eta binning for the response fits.
-        ### HCalPart: bin in HCal sectors, CaloTowers: the standard JERC binning,
-        ### CoarseCalo: like 'CaloTowers' but many bins united; onebin: combine all eta bins
-        ### Preprocessing always done in CaloTowers. For the reponse distributions, the bins can be merged.
-        "eta_binning"         : "HCalPart",  ### HCalPart, CoarseCalo, JERC, CaloTowers, Summer20Flavor, onebin;
-        "pt_binning"          : "MC_truth", ### MC_truth, Uncert, Coarse, onebin
-        "sum_neg_pos_eta_bool": True,  ### if combining the positive and negative eta bins
-        "tag_Lx" : '_L5',                 ### L5 or L23, but L23 not supported since ages.
-        
-        ### Define the dataset either by using a `data_tag` available in `dataset_dictionary`
-        ### Or manualy by defining `dataset` (below) with the path to the .txt file with the file names (without the redirectors).
-        ### Or manually by defining `fileslist` as the list with file names.
-        ### data_tag will be used to name output figures and histograms.
-        # data_tag = 'Herwig-TTBAR' # 'QCD-MG-Her' #'Herwig-TTBAR' 
-        # data_tag = 'DY-FxFx'
-        ### name of the specific run if parameters changed used for saving figures and output histograms.
-        "add_tag":             '',   
-        ### if the fit strategy changed and the results need to be stored with a different name
-        "fit_tag":              '', #_remove_bad_eta_bin   
+    def split_list_values(values, option):
+        parsed_values = []
+        for value in values:
+            parts = [part.strip() for part in value.split(",")]
+            if any(not part for part in parts):
+                parser.error(f"--{option} contains an empty list item")
+            parsed_values.extend(parts)
+        return parsed_values
 
-
-        ### Define which flavors should be fit
-        "flavors":                ['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        # "flavors":                ['b'],
-        # "flavors":                ['b_gluon_splitting', "b_prompt", 'ud', 'all', 'g', 'c_gluon_splitting', "c_prompt", 'b', 'c', 's', 'q', 'u', 'd', 'unmatched'],
-        # "flavors": ['b_gluon_splitting', "b_prompt", 'c_gluon_splitting', "c_prompt", 'b', 'c'],
-
-        ### None if all the pt bins should be fit, otherwise a list of two numbers for the range of pt bins to fit, or just one number for a single pt bin
-        # "pt_to_fit": None,
-        # "pt_to_fit": [100,5000],
-        # "eta_to_fit": [0],
-    }
-
+    parser = argparse.ArgumentParser(
+        description="Fit response distributions from CoffeaJERCProcessor output.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "-d", "--data", dest="data_tags", nargs="+", action="extend",
+        default=argparse.SUPPRESS,
+        help="dataset tag(s) from the available datasets; may provide several (default: QCD-Py-Run3-2024-Summer24)",
+    )
+    add_boolean_option(
+        "--test-run", "test_run", False,
+        "read processor output produced with test_run=True",
+    )
+    add_boolean_option(
+        "--saveplots", "saveplots", True,
+        "save response-distribution plots (many bins can take time and space)",
+        add_negative_option=False,
+    )
+    add_boolean_option(
+        "--save-fit-results", "save_fit_results", True,
+        "save the fit results",
+    )
+    parser.add_argument(
+        "--fit-results-format", choices=("json", "csv"),
+        default="json",
+        help="format used to save fit results",
+    )
+    add_boolean_option(
+        "--combine-antiflavour", "combine_antiflavour", True,
+        "combine particle and antiparticle flavors",
+    )
+    parser.add_argument(
+        "--eta-binning", default="HCalPart",
+        help=("eta binning for response fits: HCalPart, CaloTowers, CoarseCalo, "
+              "JERC, Summer20Flavor, or onebin"),
+    )
+    parser.add_argument(
+        "--pt-binning", default="MC_truth",
+        help="pt binning for response fits (for example MC_truth, Uncert, Coarse, onebin)",
+    )
+    add_boolean_option(
+        "--sum-neg-pos-eta", "sum_neg_pos_eta_bool", True,
+        "combine negative- and positive-eta bins",
+    )
+    parser.add_argument(
+        "--tag-lx", dest="tag_Lx", default="_L5",
+        help="correction level tag (L23 is not currently supported)",
+    )
+    parser.add_argument(
+        "--add-tag", default="",
+        help="extra tag for output files when run settings differ",
+    )
+    parser.add_argument(
+        "--fit-tag", default="",
+        help="extra tag for fit strategy variations",
+    )
+    parser.add_argument(
+        "--pt-to-fit", nargs="+", type=float, default=None, metavar="PT",
+        help="fit one pt value or a pt range (low high); omit to fit all pt bins",
+    )
+    parser.add_argument(
+        "--eta-to-fit", nargs="+", type=float, default=None, metavar="ETA",
+        help="fit one eta value or an eta range (low high); omit to fit all eta bins",
+    )
+    parser.add_argument(
+        "--flavors", nargs="+",
+        default=['b', 'ud', 'all', 'g', 'c', 's', 'q', 'u', 'd', 'unmatched'],
+        help="flavors to fit",
+    )
+    args = parser.parse_args(argv)
+    config = vars(args).copy()
+    data_tags = config.pop("data_tags", None)
+    if data_tags is None:
+        data_tags = ["QCD-Py-Run3-2024-Summer24"]
+    else:
+        data_tags = split_list_values(data_tags, "data")
+    config["flavors"] = split_list_values(config["flavors"], "flavors")
+    for option in ("pt_to_fit", "eta_to_fit"):
+        values = getattr(args, option)
+        if values is not None and len(values) not in (1, 2):
+            parser.error(f"--{option.replace('_', '-')} expects one value or a low/high pair")
     for data_tag in data_tags:
         fit_response_distributions(data_tag=data_tag, config=config)
+
+
+if __name__ == "__main__":
+    main()
